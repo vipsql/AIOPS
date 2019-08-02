@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.coocaa.user.mapper.MachineMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.coocaa.user.entity.Machine">
+        <id column="id" property="id"/>
+        <result column="ip" property="ip"/>
+        <result column="port" property="port"/>
+        <result column="user_id" property="userId"/>
+        <result column="metrics" property="metrics"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, mobile,company,department,department_group, organization,mail,name,password, salt,account
+    </sql>
+
+    <!--<sql id="table_name">-->
+        <!--user-->
+    <!--</sql>-->
+
+    <!--<sql id="table_name_message">-->
+        <!--user_message-->
+    <!--</sql>-->
+
+    <!--<insert id="insertReturnId" parameterType="com.message.user_message.entity.User" useGeneratedKeys="true"-->
+    <!--keyProperty="id">-->
+    <!--insert into-->
+    <!--<include refid="table_name"/>-->
+    <!--(phone, password, salt) values (#{phone}, #{password}, #{salt})-->
+    <!--</insert>-->
+
+    <!--<insert id="insert">-->
+    <!--insert into-->
+    <!--<include refid="table_name_message"/>-->
+    <!--(id, email, nick_name) values(#{id}, #{email}, #{nickName})-->
+    <!--</insert>-->
+
+    <!--<update id="updatePassword">-->
+    <!--update-->
+    <!--<include refid="table_name"/>-->
+    <!--set password = #{password} where phone = #{phone}-->
+    <!--</update>-->
+
+    <!--<update id="updatePhone">-->
+    <!--update-->
+    <!--<include refid="table_name"/>-->
+    <!--set phone = #{phone} where id = #{id}-->
+    <!--</update>-->
+
+    <!--<update id="updateMessage">-->
+    <!--update-->
+    <!--<include refid="table_name_message"/>-->
+    <!--<trim prefix="set" suffixOverrides=",">-->
+    <!--<if test="email != null">-->
+    <!--email = #{email},-->
+    <!--</if>-->
+    <!--<if test="nickName != null">-->
+    <!--nick_name = #{nickName},-->
+    <!--</if>-->
+    <!--</trim>-->
+    <!--where id = #{id}-->
+    <!--</update>-->
+
+    <!--<update id="deleteMessage">-->
+    <!--update-->
+    <!--<include refid="table_name_message"/>-->
+    <!--set logic = #{logic} where id = #{id}-->
+    <!--</update>-->
+
+    <!--<select id="selectUser" resultType="com.message.user_message.entity.dto.UserDTO">-->
+    <!--select u.id, u.phone, m.email, m.nick_name from user u, user_message m where u.id = m.id and u.id = #{id}-->
+    <!--</select>-->
+
+    <!--<select id="selectAllUsers" resultType="com.message.user_message.entity.dto.UserDTO">-->
+    <!--select u.id, u.phone, m.email, m.nick_name from user u, user_message m where u.id = m.id-->
+    <!--</select>-->
+
+    <!--<select id="selectPassword" resultType="com.message.user_message.entity.User">-->
+    <!--select id, password, salt from-->
+    <!--<include refid="table_name"/>-->
+    <!--where phone = #{phone}-->
+    <!--</select>-->
+
+</mapper>

@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: aiops-user
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 39.108.106.167:8848
+      config:
+        server-addr: 39.108.106.167:8848
+        file-extension: yaml
+  profiles:
+    active: dev
+
+

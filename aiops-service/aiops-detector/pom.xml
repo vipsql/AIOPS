@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>aiops-service</artifactId>
+        <groupId>com.coocaa</groupId>
+        <version>2.3.1</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>aiops-detector</artifactId>
+    <name>${project.artifactId}</name>
+    <version>${aiops.project.version}</version>
+    <packaging>jar</packaging>
+    <description>数据检测服务</description>
+    <dependencies>
+        <dependency>
+            <groupId>com.coocaa</groupId>
+            <artifactId>aiops-core-boot</artifactId>
+            <version>${aiops.tool.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.coocaa</groupId>
+            <artifactId>aiops-detector-api</artifactId>
+            <version>${aiops.project.version}</version>
+        </dependency>
+    </dependencies>
+</project>

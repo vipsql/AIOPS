@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: aiops-gateway
+  cloud:
+    nacos:
+      config:
+        server-addr: 39.108.106.167:8848
+        file-extension: yaml
+  profiles:
+    active: dev

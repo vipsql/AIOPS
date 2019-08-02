@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: aiops-auth
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 39.108.106.167:8848
+      config:
+        server-addr: 39.108.106.167:8848
+        file-extension: yaml
+    sentinel:
+      transport:
+        dashboard: 47.107.139.6:8858
+
+  profiles:
+    active: dev
