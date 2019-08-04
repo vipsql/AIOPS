@@ -45,7 +45,6 @@ public class TaskManager implements DisposableBean {
             ScheduledFuture<?> scheduledTask = this.scheduledTasks.remove(taskId);
             if (scheduledTask != null && !scheduledTask.isCancelled()) {
                 scheduledTask.cancel(true);
-                System.out.println("停止定时任务");
                 return true;
             }
         }

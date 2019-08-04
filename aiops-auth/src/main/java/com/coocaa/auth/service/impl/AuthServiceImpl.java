@@ -68,8 +68,7 @@ public class AuthServiceImpl implements AuthService {
         String token = "";
         User user;
         if (!R.isSuccess(apiResult)) {
-            LDAPEntry userInfo = ldapUtil.validAndGetUser("zhanghonghao@coocaa.com", "ZHHzhh156@");
-            //  CN=张宏浩,OU=媒资管理,OU=技术开发组,OU=云技术部,OU=酷开公司,OU=Coocaa,DC=coocaa,DC=com
+            LDAPEntry userInfo = ldapUtil.validAndGetUser("zhanghonghao@coocaa.com", "xxx");
             String[] userInfos = userInfo.getDN().split(",");
             String name = userInfo.getAttributeSet().getAttribute("name").getStringValue();
             user = User.builder()
