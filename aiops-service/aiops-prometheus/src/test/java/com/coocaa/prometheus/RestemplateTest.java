@@ -21,7 +21,6 @@ import java.util.List;
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest
-
 public class RestemplateTest {
     @Autowired
     RestTemplate restTemplate;
@@ -41,5 +40,6 @@ public class RestemplateTest {
         String substring = String.format("%.4f", Double.parseDouble("1.66666"));
         System.out.println(Integer.valueOf(substring) * 10000);
     }
+
 
 }

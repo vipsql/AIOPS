@@ -1,7 +1,6 @@
 package com.coocaa.prometheus.util.runnable;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.coocaa.common.constant.Constant;
 import com.coocaa.core.tool.utils.SpringUtil;
 import com.coocaa.prometheus.entity.*;
@@ -29,23 +28,14 @@ public class QueryMetricTask implements Runnable {
     public void run() {
         try {
             if (Constant.NumberType.ZERO_PROPERTY.equals(type)) {
-                QueryInstant queryInstant = task.getQueryInstant();
-                if (queryInstant == null) {
-                    queryInstant = JSON.parseObject(task.getArgs(), QueryInstant.class);
-                }
-                List<VectorData> vectorData = TaskManager.getPromQLService().instantQuery(queryInstant.getQuery(), queryInstant.getDate(), queryInstant.getTimeout());
-                System.out.println(vectorData);
-                vectorData.forEach(item -> item.setTaskId(task.getTaskId()));
-                TaskManager.getTimingDataSender().send(JSONArray.toJSONString(vectorData));
-            } else if (Constant.NumberType.ONE_PROPERTY.equals(type)) {
                 QueryRange queryRange = task.getQueryRange();
                 if (queryRange == null) {
                     queryRange = JSON.parseObject(task.getArgs(), QueryRange.class);
                 }
-                List<MatrixData> matrixData = TaskManager.getPromQLService().rangeQuery(queryRange.getQuery(), queryRange.getStart(), queryRange.getEnd(), queryRange.getStep());
-                System.out.println(matrixData);
-                matrixData.forEach(item -> item.setTaskId(task.getTaskId()));
-                TaskManager.getTimingDataSender().send(JSONArray.toJSONString(matrixData));
+                List<MatrixData> rangeValues = TaskManager.getPromQLService().getRangeValues(queryRange.getQuery(), queryRange.getSpan(), queryRange.getStep(), queryRange.getConditions());
+                // 判断数据是否异常，异常则加入异常列表并发通知给负责人
+                // 发给team中的所有成员
+                // TaskManager.getTimingDataSender().send(JSONArray.toJSONString(rangeValues));
             }
         } catch (Exception e) {
             TaskManager taskManager = SpringUtil.getBean("TaskManager");

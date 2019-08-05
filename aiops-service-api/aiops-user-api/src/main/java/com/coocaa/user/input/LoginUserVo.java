@@ -5,7 +5,6 @@ import lombok.*;
 import javax.validation.constraints.NotBlank;
 
 /**
- * @program: intelligent_maintenance
  * @description: 登录用户
  * @author: dongyang_wu
  * @create: 2019-07-30 21:23

@@ -18,7 +18,7 @@ import java.util.List;
 public class User extends Model<User> {
     private static final long serialVersionUID = 1L;
     @TableId(value = "id", type = IdType.AUTO)
-    private Integer id;
+    private Long id;
     private String company;
     private String department;
     private String departmentGroup;
@@ -30,11 +30,12 @@ public class User extends Model<User> {
     @NotEmpty(message = "密码不能为空")
     private String password;
     private String salt;
+    private String teamIds;
     @TableLogic
     private Integer logic;
-    @TableField(fill = FieldFill.INSERT_UPDATE)
+    @TableField(fill = FieldFill.INSERT)
     private Date createTime;
-    @TableField(fill = FieldFill.UPDATE)
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
     @Version
     private Integer version;

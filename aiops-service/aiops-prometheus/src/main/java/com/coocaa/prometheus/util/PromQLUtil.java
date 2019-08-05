@@ -1,6 +1,9 @@
 package com.coocaa.prometheus.util;
 
-import com.coocaa.core.tool.utils.Func;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
+
+import java.util.*;
 
 /**
  * @program: intelligent_maintenance
@@ -14,5 +17,16 @@ public class PromQLUtil {
         StringBuffer sb = new StringBuffer();
         sb.append(key).append("=\"").append(value).append("\"");
         return sb.toString();
+    }
+
+    public static String getQueryConditionStr(String metricsName, Map<String, String> conditions) {
+        List<String> conditionQuery = new ArrayList<>();
+        conditions.forEach((key, value) -> conditionQuery.add(getQueryConditionStr(key, value)));
+        if (!CollectionUtils.isEmpty(conditionQuery)) {
+            StringBuffer condition = new StringBuffer();
+            condition.append("{").append(StringUtils.collectionToDelimitedString(conditionQuery, ",")).append("}");
+            return String.format(metricsName, condition.toString());
+        }
+        return metricsName.replace("%s", "");
     }
 }

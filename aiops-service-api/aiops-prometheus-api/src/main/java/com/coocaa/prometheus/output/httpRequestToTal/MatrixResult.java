@@ -4,6 +4,8 @@ import com.coocaa.detector.entity.DetectorResult;
 import com.coocaa.prometheus.entity.Metric;
 import lombok.*;
 
+import java.util.List;
+
 /**
  * @program: intelligent_maintenance
  * @description: 异常检测结果

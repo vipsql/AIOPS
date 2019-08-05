@@ -3,6 +3,7 @@ package com.coocaa.prometheus.entity;
 import lombok.*;
 
 import java.util.Date;
+import java.util.Map;
 
 /**
  * @program: intelligent_maintenance
@@ -19,4 +20,5 @@ public class QueryInstant {
     private String query;
     private Date date;
     private Integer timeout;
+    private Map<String, String> conditions;
 }

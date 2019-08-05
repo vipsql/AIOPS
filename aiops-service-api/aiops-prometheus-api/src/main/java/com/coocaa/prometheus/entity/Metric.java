@@ -16,10 +16,11 @@ import lombok.*;
 public class Metric {
 
     private String __name__;
-
-    private String job;
-
     private String instance;
+    private String job;
+    private String module;
+    private String system;
+    private String type;
     private String device;
 
     /**

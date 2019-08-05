@@ -9,6 +9,7 @@ import com.coocaa.core.log.response.ResultBean;
 import com.coocaa.prometheus.entity.PrometheusConfig;
 import com.coocaa.prometheus.entity.Task;
 import com.coocaa.prometheus.input.QueryMetricProperty;
+import com.coocaa.prometheus.input.TaskInputVo;
 import com.coocaa.prometheus.service.PromQLService;
 import com.coocaa.prometheus.service.TaskService;
 import com.coocaa.prometheus.util.FileJsonUtil;
@@ -17,11 +18,13 @@ import io.swagger.annotations.ApiOperation;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
 
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 /**
- * @program: intelligent_maintenance
  * @description:
  * @author: dongyang_wu
  * @create: 2019-07-31 22:34
@@ -46,33 +49,6 @@ public class PrometheusController {
         return ResponseHelper.OK(fileJsonUtil.createJsonFile(prometheusConfigs, type, mode));
     }
 
-    @PostMapping("/create/{type}")
-    @ApiOperation(value = "新建或更新监控定时任务(会重新启动定时任务可用于更改时间粒度)",
-            notes = "task例:  \n" +
-                    "   taskId: 16,  \n" +
-                    "  taskName: 业务访问量定时任务,  \n" +
-                    "  taskDescription: 业务访问量定时任务,  \n" +
-                    "  taskCron:  0/17 * * * * ?, \n" +
-                    "  queryMetric: http请求量,  \n" +
-                    "  queryInstant: {   \n" +
-                    "  query: http_requests_total,  \n" +
-                    "  timeout: 1000  \n" +
-                    "  }   \n" +
-                    "type:0即时数据传queryInstant 1范围数据传queryRange;  \n")
-    public ResponseEntity<ResultBean> createTask(@RequestBody Task task, @PathVariable Integer type) {
-        Boolean queryMetricsTask = taskService.createQueryMetricsTask(task, type);
-        return ResponseHelper.OK(queryMetricsTask);
-    }
-
-    @PostMapping("/stop/{type}")
-    @ApiOperation(value = "删除、停止或禁用监控定时任务",
-            notes = "query: 对应数据库表键值如id  \n" +
-                    "queryString: 对应查询值如17  \n" +
-                    "type: 0删除1停止2禁用  \n")
-    public ResponseEntity<ResultBean> stopTask(@RequestBody RequestBean requestBean, @PathVariable Integer type) {
-        Boolean queryMetricsTask = taskService.removeQueryMetricsTask(requestBean, type);
-        return ResponseHelper.OK(queryMetricsTask);
-    }
 
     @PostMapping("/query/{type}")
     @ApiOperation(value = "查询范围或即时指定指标数据",
@@ -99,8 +75,55 @@ public class PrometheusController {
                     "1、2无可选条件  \n" +
                     "3、4、6、7、8可选条件为(instance)  \n" +
                     "5可选条件为(instance)、metricsName必填(node_load1%s、node_load5%s或node_load15%s))  \n")
-    public ResponseEntity<ResultBean> exceptionDetect(@RequestBody QueryMetricProperty queryMetricProperty, @PathVariable Integer type) {
+    @ApiIgnore
+    public ResponseEntity<ResultBean> exceptionDetect(@RequestBody QueryMetricProperty queryMetricProperty, @PathVariable Integer type) throws ExecutionException, InterruptedException {
         return promQLService.exceptionDetect(queryMetricProperty, type);
+    }
+
+    @PostMapping("/create")
+    @ApiOperation(value = "新建或更新监控定时任务(会重新启动定时任务可用于更改时间粒度)",
+            notes = "task例:{  \n" +
+                    "  taskId: 16,  \n" +
+                    "  type: 0定期拉取数据进行异常检测1定期拉取数据传入metis进行训练,  \n" +
+                    "  taskName: 业务访问量定时任务,  \n" +
+                    "  taskDescription: 业务访问量定时任务,  \n" +
+                    "  taskCron:  0/17 * * * * ?, \n" +
+                    "  queryMetric: http请求量,  \n" +
+                    "  queryRange: {   \n" +
+                    "  query: http_requests_total%s,  \n" +
+                    "  span: 86400  \n" +
+                    "  step: 60  \n" +
+                    "  conditions: {  \n" +
+                    "  instance: 172.16.20.142:3903  \n" +
+                    "    }  \n" +
+                    "  }  \n" +
+                    "  传id更新不传id新建  \n")
+    public ResponseEntity<ResultBean> createTask(@RequestBody TaskInputVo task) {
+        return ResponseHelper.OK(taskService.createQueryMetricsTask(task));
+    }
+
+    @PostMapping("/stop/{type}")
+    @ApiOperation(value = "删除、停止或禁用监控定时任务",
+            notes = "query: 对应数据库表键值如id  \n" +
+                    "queryString: 对应查询值如17  \n" +
+                    "type: 0删除1停止2禁用  \n")
+    public ResponseEntity<ResultBean> stopTask(@RequestBody RequestBean requestBean, @PathVariable Integer type) {
+        Boolean queryMetricsTask = taskService.removeQueryMetricsTask(requestBean, type);
+        return ResponseHelper.OK(queryMetricsTask);
+    }
+
+    @PostMapping("/values/{metricsName}/{span}/{step}")
+    @ApiOperation(value = "根据指标名、筛选条件、时间间隔和步长获取具体时间端的数据同时判断最新点是否异常",
+            notes = "metricsName: http_requests_total%s(%s不可省,为存放条件的位置)  \n" +
+                    "span: 秒钟单位,距今多少秒钟的数据  \n" +
+                    "step: 秒钟单位,步长  \n" +
+                    "conditions: 条件的map(调用condition接口可以获取到可取的值)  \n" +
+                    "返回有效值:  \n" +
+                    "metric:对应指标名  \n" +
+                    "values:相应时刻与对应的值  \n" +
+                    "detectResult:最新时刻异常检测结果  \n")
+    public ResponseEntity<ResultBean> getValues(@PathVariable String metricsName, @PathVariable Integer span, @PathVariable Integer step, @RequestBody Map<String, String> conditions) throws ExecutionException, InterruptedException {
+        return ResponseHelper.OK(promQLService.getRangeValues(metricsName, span, step, conditions));
     }
 
     @GetMapping("/targets")

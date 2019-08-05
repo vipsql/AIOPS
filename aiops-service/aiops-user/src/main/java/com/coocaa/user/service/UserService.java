@@ -1,5 +1,6 @@
 package com.coocaa.user.service;
 
+import com.coocaa.common.request.RequestBean;
 import com.coocaa.user.entity.User;
 import com.coocaa.core.mybatis.base.BaseService;
 import com.coocaa.user.entity.UserInfo;
@@ -16,4 +17,6 @@ public interface UserService extends BaseService<User> {
     UserInfo userInfo(String account, String password);
 
     User getUser();
+
+    List<User> getByAttr(RequestBean requestBean);
 }

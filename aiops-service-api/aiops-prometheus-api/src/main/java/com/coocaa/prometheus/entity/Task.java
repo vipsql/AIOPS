@@ -54,6 +54,13 @@ public class Task extends Model<Task> {
     @NotEmpty(message = "查询指标不能为空")
     private String queryMetric;
     /**
+     * 客户端订阅URL
+     */
+    @NotEmpty(message = "客户端订阅URL不能为空")
+    private String subscribeName;
+
+    private Integer type;
+    /**
      * 启动者
      */
     private Long createUserId;
@@ -70,10 +77,6 @@ public class Task extends Model<Task> {
      * 是否启用0禁用 1启用
      */
     private Byte status;
-    /**
-     * 类型 0即时1范围
-     */
-    private Integer type;
     @TableField(exist = false)
     private QueryInstant queryInstant;
     @TableField(exist = false)
@@ -83,10 +86,12 @@ public class Task extends Model<Task> {
     /**
      * 更新时间
      */
+    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
     /**
      * 创建时间
      */
+    @TableField(value = "create_time", fill = FieldFill.INSERT)
     private Date createTime;
 
     @Override

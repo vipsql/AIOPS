@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.coocaa.common.request.RequestBean;
 import com.coocaa.prometheus.entity.Task;
+import com.coocaa.prometheus.input.TaskInputVo;
 
 /**
  * @program: intelligent_maintenance
@@ -16,7 +17,7 @@ public interface TaskService extends IService<Task> {
     /**
      * 新增或更新定时任务
      */
-    Boolean createQueryMetricsTask(Task task, Integer type);
+    Task createQueryMetricsTask(TaskInputVo taskInputVo);
 
     /**
      * 停止、删除或禁用定时任务

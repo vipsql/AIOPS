@@ -6,5 +6,7 @@ package com.coocaa.prometheus.common;
  * @author: dongyang_wu
  * @create: 2019-08-02 17:26
  */
-public class PromBaseLables {
+public interface PromBaseLables {
+
+    String baseLables = "type system module job hostname";
 }

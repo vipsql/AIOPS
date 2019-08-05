@@ -19,7 +19,7 @@ public class UserVO extends User {
 	/**
 	 * 主键ID
 	 */
-	private Integer id;
+	private Long id;
 
 	/**
 	 * 角色名

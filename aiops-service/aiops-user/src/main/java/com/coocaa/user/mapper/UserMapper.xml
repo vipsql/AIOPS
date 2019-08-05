@@ -14,6 +14,7 @@
         <result column="salt" property="salt"/>
         <result column="account" property="account"/>
         <result column="password" property="password"/>
+        <result column="team_ids" property="teamIds"/>
         <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
         <result column="version" property="version"/>

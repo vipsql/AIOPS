@@ -1,6 +1,8 @@
 package com.coocaa.user.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.coocaa.common.request.RequestBean;
+import com.coocaa.core.tool.utils.SqlUtil;
 import com.coocaa.user.entity.User;
 import com.coocaa.user.mapper.UserMapper;
 import com.coocaa.user.service.UserService;
@@ -37,5 +39,10 @@ public class UserServiceImpl extends BaseServiceImpl<UserMapper, User> implement
     @Override
     public User getUser() {
         return userMapper.getUser(1L);
+    }
+
+    @Override
+    public List<User> getByAttr(RequestBean requestBean) {
+        return userMapper.selectByMap(SqlUtil.map(requestBean));
     }
 }

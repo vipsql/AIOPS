@@ -17,14 +17,12 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class MatrixData {
-    private Integer taskId;
-
     private Metric metric;
 
     /**
      * [ [ <unix_time>, "<sample_value>" ] ]
      */
     private List<String> values;
+    private DetectorResult.DataBean detectResult;
     private String metisData;
-
 }

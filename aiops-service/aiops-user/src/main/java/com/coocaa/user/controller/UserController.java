@@ -1,5 +1,6 @@
 package com.coocaa.user.controller;
 
+import com.coocaa.common.request.RequestBean;
 import com.coocaa.user.service.UserService;
 import com.coocaa.core.log.response.ResponseHelper;
 import com.coocaa.core.log.response.ResultBean;
@@ -10,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * @program: intelligent_maintenance
  * @description:
  * @author: dongyang_wu
  * @create: 2019-07-29 14:55
@@ -21,9 +21,9 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
     private UserService userService;
 
-    @GetMapping("/{id}")
-    @ApiOperation(value = "获取指定id用户", notes = "id")
-    ResponseEntity<ResultBean> get(@PathVariable Long id) {
-        return ResponseHelper.OK(userService.getBaseMapper().selectById(id));
+    @PostMapping("/user/attr")
+    @ApiOperation(value = "获取指定属性的用户信息", notes = "id")
+    ResponseEntity<ResultBean> getByAttr(@RequestBody RequestBean requestBean) {
+        return ResponseHelper.OK(userService.getByAttr(requestBean));
     }
 }

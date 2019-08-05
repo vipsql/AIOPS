@@ -12,18 +12,19 @@
         <result column="task_description" property="taskDescription"/>
         <result column="task_cron" property="taskCron"/>
         <result column="query_metric" property="queryMetric"/>
+        <result column="subscribe_name" property="subscribeName"/>
+        <result column="type" property="type"/>
         <result column="create_user_id" property="createUserId"/>
         <result column="machine_id" property="machineId"/>
         <result column="args" property="args"/>
         <result column="status" property="status"/>
-        <result column="type" property="type"/>
         <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
     </resultMap>
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        task_id, task_name, task_description, task_cron
+        task_id, task_name, task_description, task_cron,create_time,update_time
     </sql>
 
     <!-- 表名 -->

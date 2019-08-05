@@ -3,6 +3,7 @@ package com.coocaa.prometheus.feign;
 import com.coocaa.common.constant.Constant;
 import com.coocaa.core.tool.api.R;
 import com.coocaa.prometheus.entity.Task;
+import com.coocaa.prometheus.input.TaskInputVo;
 import com.coocaa.prometheus.service.TaskService;
 import com.coocaa.prometheus.util.TaskManager;
 import lombok.AllArgsConstructor;
@@ -22,8 +23,8 @@ public class TaskClient implements ITaskClient {
     private TaskManager taskManager;
 
     @Override
-    public R<Boolean> createTask(Task task, Integer type) {
-        return R.data(taskService.createQueryMetricsTask(task, type));
+    public R<Task> createTask(TaskInputVo task, Integer type) {
+        return R.data(taskService.createQueryMetricsTask(task));
     }
 
     @Override

@@ -12,17 +12,20 @@ import com.coocaa.core.tool.response.CodeEnum;
 import com.coocaa.core.tool.utils.*;
 import com.coocaa.detector.entity.*;
 import com.coocaa.detector.feign.IDetectorFeign;
+import com.coocaa.prometheus.common.PromBaseLables;
 import com.coocaa.prometheus.common.PromNorm;
 import com.coocaa.prometheus.entity.*;
 import com.coocaa.prometheus.input.QueryMetricProperty;
 import com.coocaa.prometheus.output.httpRequestToTal.MatrixResult;
 import com.coocaa.prometheus.service.PromQLService;
 import com.coocaa.prometheus.util.PromQLUtil;
+import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -32,6 +35,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @Auther: wyx
@@ -65,7 +70,7 @@ public class PromQLServiceImpl implements PromQLService {
     }
 
     @Override
-    public ResponseEntity<ResultBean> exceptionDetect(QueryMetricProperty queryMetricProperty, Integer type) {
+    public ResponseEntity<ResultBean> exceptionDetect(QueryMetricProperty queryMetricProperty, Integer type) throws ExecutionException, InterruptedException {
         String realQuery = null;
         if (Constant.NumberType.ZERO_PROPERTY.equals(type)) {
             queryMetricProperty.setMetricsName(PromNorm.REQUEST_TOTAL);
@@ -92,39 +97,49 @@ public class PromQLServiceImpl implements PromQLService {
             queryMetricProperty.setMetricsName(PromNorm.NODE_MEMORY_CACHED_BYTES);
             realQuery = getRealHttpTotalQuery(queryMetricProperty);
         }
-        Date now = new Date();
-        System.out.println("-----------当前时刻");
-        Date date = DateUtil.setHours(now, -3);
-        List<MatrixData> metisDataA = getMetisDataFirst(realQuery, date, now);
-        System.out.println("------------一天前");
-        Date yesterday = DateUtil.setDays(now, -1);
-        List<String> metisDataB = getMetisData(realQuery, DateUtil.setHours(yesterday, -3), DateUtil.setHours(yesterday, 3));
-        System.out.println("------------一周前");
-        Date weekEarlier = DateUtil.setWeeks(now, -1);
-        List<String> metisDataC = getMetisData(realQuery, DateUtil.setHours(weekEarlier, -3), DateUtil.setHours(weekEarlier, 3));
-        List<MatrixResult> realResult = new ArrayList<>();
-        for (int i = 0; i < metisDataA.size(); i++) {
-            MatrixData matrixData = metisDataA.get(i);
-            MatrixResult matrixResult = new MatrixResult();
-            matrixResult.setMetric(matrixData.getMetric());
-            Detector detector = Detector.builder()
-                    .attrName("http接口请求数")
-                    .window(180)
-                    .viewId("2012")
-                    .viewName("登陆功能")
-                    .attrId("19201")
-                    .dataA(matrixData.getMetisData())
-                    .dataB(metisDataB.get(i))
-                    .dataC(metisDataC.get(i))
-                    .time(metisDateFormat.format(now)).build();
-            R<DetectorResult> rpcResult = detectorFeign.timeSeriesDetector(detector);
-            if (rpcResult.isSuccess()) {
-                matrixResult.getMetric().set__name__(realQuery);
-                matrixResult.setDetectResult(rpcResult.getData().getData());
-                realResult.add(matrixResult);
-            }
-        }
+        List<MatrixData> realResult = detectByMetis(realQuery, null);
         return ResponseHelper.OK(realResult);
+    }
+
+    @Override
+    public ResponseEntity<ResultBean> getConditionByMetricsName(String metricsName, Integer minute) {
+        Date now = new Date();
+        // 取5分钟内的指标标签和对应的值
+        Date date = DateUtil.setMinutes(now, -minute);
+        // result结果list
+        List<Map<String, Object>> maps = rangeQueryToList(metricsName, date, now, 60);
+        // 标签与可取值list的map
+        Map<String, Set<String>> conditionResult = new HashMap<>();
+        maps.forEach(item -> {
+            Map<String, String> metric = JSON.parseObject(item.get("metric").toString(), Map.class);
+            // 遍历metric
+            metric.forEach((key, value) -> {
+                // 公共标签值，忽略
+                if (PromBaseLables.baseLables.contains(key))
+                    return;
+                if (!conditionResult.containsKey(key)) {
+                    HashSet<String> sets = new HashSet<>();
+                    sets.add(value);
+                    conditionResult.put(key, sets);
+                } else {
+                    Set<String> sets = conditionResult.get(key);
+                    sets.add(value);
+                    conditionResult.put(key, sets);
+                }
+            });
+        });
+        conditionResult.put("baseLables", Sets.newHashSet(PromBaseLables.baseLables));
+        return ResponseHelper.OK(conditionResult);
+    }
+
+    @Override
+    public List<MatrixData> getRangeValues(String metricName, Integer span, Integer step, Map<String, String> conditions) throws ExecutionException, InterruptedException {
+        String realQuery = PromQLUtil.getQueryConditionStr(metricName, conditions);
+        Date end = new Date();
+        Date begin = DateUtil.setSeconds(end, -span);
+        List<MatrixData> matrixData = rangeQuery(realQuery, begin, end, step);
+        List<MatrixData> realResult = detectByMetis(realQuery, matrixData);
+        return realResult;
     }
 
     @Override
@@ -152,14 +167,72 @@ public class PromQLServiceImpl implements PromQLService {
 
     @Override
     public List<MatrixData> rangeQuery(String query, Date start, Date end, Integer step) {
+        JSONArray jsonArray = sendRangQuery(query, start, end, step);
+        List<MatrixData> matrixData = JSON.parseArray(jsonArray.toJSONString(), MatrixData.class);
+        return matrixData;
+    }
+
+    @Override
+    public List<Map<String, Object>> rangeQueryToList(String query, Date start, Date end, Integer step) {
+        JSONArray jsonArray = sendRangQuery(query, start, end, step);
+        List<Map<String, Object>> list = (List) jsonArray;
+        return list;
+    }
+
+    private JSONArray sendRangQuery(String query, Date start, Date end, Integer step) {
         String url = serverUrl + "query_range?query=" + query + "&start=" + parseTime(start) + "&end=" + parseTime(end) + "&step=" + step;
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
         URI uri = builder.build().encode().toUri();
         ResponseEntity<String> forEntity = restTemplate.getForEntity(uri, String.class);
         JSONObject jsonObject = verifyResponse(forEntity);
         JSONArray jsonArray = jsonObject.getJSONObject("data").getJSONArray("result");
-        List<MatrixData> matrixData = JSON.parseArray(jsonArray.toJSONString(), MatrixData.class);
-        return matrixData;
+        return jsonArray;
+    }
+
+    private List<MatrixData> detectByMetis(String realQuery, List<MatrixData> matrixDatas) throws ExecutionException, InterruptedException {
+        Date now = new Date();
+        System.out.println("-----------当前时刻");
+        Date date = DateUtil.setHours(now, -3);
+        CompletableFuture<List<MatrixData>> metisDataAsyncA = getMetisDataFirst(realQuery, date, now);
+        System.out.println("------------一天前");
+        Date yesterday = DateUtil.setDays(now, -1);
+        CompletableFuture<List<String>> metisDataAsyncB = getMetisData(realQuery, DateUtil.setHours(yesterday, -3), DateUtil.setHours(yesterday, 3));
+        System.out.println("------------一周前");
+        Date weekEarlier = DateUtil.setWeeks(now, -1);
+        CompletableFuture<List<String>> metisDataAsyncC = getMetisData(realQuery, DateUtil.setHours(weekEarlier, -3), DateUtil.setHours(weekEarlier, 3));
+        // 等待3者执行完成 多线程异步执行
+        CompletableFuture.allOf(metisDataAsyncA, metisDataAsyncB, metisDataAsyncC).join();
+        List<MatrixData> metisDataA = metisDataAsyncA.get();
+        List<String> metisDataB = metisDataAsyncB.get();
+        List<String> metisDataC = metisDataAsyncC.get();
+        System.out.println("执行完毕");
+        if (CollectionUtils.isEmpty(matrixDatas))
+            matrixDatas = metisDataA;
+        for (int i = 0; i < metisDataA.size(); i++) {
+            MatrixData matrixData = metisDataA.get(i);
+            MatrixResult matrixResult = new MatrixResult();
+            matrixResult.setMetric(matrixData.getMetric());
+            Detector detector = Detector.builder()
+                    .attrName("http接口请求数")
+                    .window(180)
+                    .viewId("2012")
+                    .viewName("登陆功能")
+                    .attrId("19201")
+                    .dataA(matrixData.getMetisData())
+                    .dataB(metisDataB.get(i))
+                    .dataC(metisDataC.get(i))
+                    .taskId("1564996712706_features")
+                    .time(metisDateFormat.format(now)).build();
+            R<DetectorResult> rpcResult = detectorFeign.timeSeriesDetector(detector);
+            String instance = matrixData.getMetric().getInstance();
+            String resultInstance = matrixDatas.get(i).getMetric().getInstance();
+            if (rpcResult.isSuccess() && instance.equals(resultInstance)) {
+                matrixDatas.get(i).setDetectResult(rpcResult.getData().getData());
+            } else {
+                System.out.println(instance + "不匹配" + resultInstance);
+            }
+        }
+        return matrixDatas;
     }
 
     private String getRealHttpTotalQuery(QueryMetricProperty queryMetricProperty) {
@@ -184,17 +257,19 @@ public class PromQLServiceImpl implements PromQLService {
         return queryMetricProperty.getMetricsName().replace("%s", "");
     }
 
-    private List<MatrixData> getMetisDataFirst(String query, Date begin, Date end) {
+    @Async
+    CompletableFuture<List<MatrixData>> getMetisDataFirst(String query, Date begin, Date end) {
         List<MatrixData> matrixData = rangeQuery(query, begin, end, 60);
         matrixData.forEach(result -> {
             StringBuffer sb = new StringBuffer();
             result.getValues().forEach(item -> sb.append(getRealMetisValue(item)));
             result.setMetisData(sb.substring(0, sb.length() - 1));
         });
-        return matrixData;
+        return CompletableFuture.completedFuture(matrixData);
     }
 
-    private List<String> getMetisData(String query, Date begin, Date end) {
+    @Async
+    CompletableFuture<List<String>> getMetisData(String query, Date begin, Date end) {
         List<MatrixData> matrixData = rangeQuery(query, begin, end, 60);
         List<String> metisString = new ArrayList<>();
         matrixData.forEach(result -> {
@@ -202,20 +277,20 @@ public class PromQLServiceImpl implements PromQLService {
             result.getValues().forEach(item -> sb.append(getRealMetisValue(item)));
             metisString.add(sb.substring(0, sb.length() - 1));
         });
-        return metisString;
+        return CompletableFuture.completedFuture(metisString);
     }
 
     private String getRealMetisValue(String item) {
         String substring = item.substring(item.indexOf(",") + 2, item.indexOf("]") - 1);
-        if (substring.contains(".")) {
-            substring = String.format("%.4f", Double.parseDouble(substring));
-            Double aDouble = Double.valueOf(substring);
-            aDouble = aDouble * 10000;
-            return aDouble.intValue() + ",";
-        } else if (substring.equals("0")) {
-            substring = "10000";
-            return substring + ",";
-        }
+//        if (substring.contains(".")) {
+//            substring = String.format("%.4f", Double.parseDouble(substring));
+//            Double aDouble = Double.valueOf(substring);
+//            aDouble = aDouble * 10000;
+//            return aDouble.intValue() + ",";
+//        } else if (substring.equals("0")) {
+//            substring = "10000";
+//            return substring + ",";
+//        }
         return substring + ",";
     }
 

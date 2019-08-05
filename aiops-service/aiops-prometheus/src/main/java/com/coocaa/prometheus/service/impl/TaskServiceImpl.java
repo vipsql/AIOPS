@@ -9,11 +9,13 @@ import com.coocaa.common.constant.TableConstant;
 import com.coocaa.common.request.RequestBean;
 import com.coocaa.core.tool.utils.SqlUtil;
 import com.coocaa.prometheus.entity.Task;
+import com.coocaa.prometheus.input.TaskInputVo;
 import com.coocaa.prometheus.mapper.TaskMapper;
 import com.coocaa.prometheus.service.TaskService;
 import com.coocaa.prometheus.util.TaskManager;
 import com.coocaa.prometheus.util.runnable.QueryMetricTask;
 import lombok.AllArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,38 +36,33 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
     private TaskMapper taskMapper;
 
     @Override
-    public Boolean createQueryMetricsTask(Task task, Integer type) {
-        if (Constant.NumberType.ZERO_PROPERTY.equals(type)) {
-            task.setArgs(JSON.toJSONString(task.getQueryInstant()));
-        } else if (Constant.NumberType.ONE_PROPERTY.equals(type)) {
-            task.setArgs(JSON.toJSONString(task.getQueryRange()));
-        }
+    public Task createQueryMetricsTask(TaskInputVo taskInputVo) {
+        Task task = new Task();
+        BeanUtils.copyProperties(taskInputVo, task);
+        task.setArgs(JSON.toJSONString(task.getQueryRange()));
         task.setStatus(Constant.NumberType.GOOD_PROPERTY);
-        task.setType(type);
         boolean insert = task.insertOrUpdate();
         if (insert) {
-            QueryMetricTask queryMetricTask = new QueryMetricTask(task, type);
+            QueryMetricTask queryMetricTask = new QueryMetricTask(task, task.getType());
             taskManager.addCronTask(task.getTaskId(), queryMetricTask, task.getTaskCron());
         }
-        return insert;
+        return task;
     }
 
     @Override
     @Transactional
     public Boolean removeQueryMetricsTask(RequestBean requestbean, Integer type) {
-        if (Constant.NumberType.TWO_PROPERTY.equals(type)) {
-            requestbean.getItems().forEach(item -> {
-                List<Task> tasks = taskMapper.selectByMap(SqlUtil.map(item.getQuery(), item.getQueryString()).build());
+        Set<Integer> taskIdSets = new HashSet<>();
+        requestbean.getItems().forEach(item -> {
+            List<Task> tasks = taskMapper.selectByMap(SqlUtil.map(item.getQuery(), item.getQueryString()).build());
+            if (Constant.NumberType.TWO_PROPERTY.equals(type)) {
                 // 禁用指定的定时任务
                 tasks.forEach(task -> {
                     task.setStatus(Constant.NumberType.BAD_PROPERTY);
                     task.insertOrUpdate();
                 });
-            });
-        }
-        Set<Integer> taskIdSets = new HashSet<>();
-        requestbean.getItems().forEach(item -> {
-            List<Task> tasks = taskMapper.selectByMap(SqlUtil.map(item.getQuery(), item.getQueryString()).build());
+            }
+            // 获取指定的sets
             List<Integer> ids = tasks.stream().map(Task::getTaskId).collect(Collectors.toList());
             taskIdSets.addAll(ids);
         });

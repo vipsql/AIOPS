@@ -6,8 +6,8 @@ import com.coocaa.prometheus.entity.*;
 import com.coocaa.prometheus.input.QueryMetricProperty;
 import org.springframework.http.ResponseEntity;
 
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @Auther: wyx
@@ -15,7 +15,6 @@ import java.util.List;
  * @Description: 与 Prometheus 交互服务
  */
 public interface PromQLService {
-
 
     ResponseEntity<ResultBean> queryMetrics(Task task, Integer type);
 
@@ -26,13 +25,42 @@ public interface PromQLService {
      * @param type
      * @return
      */
-    ResponseEntity<ResultBean> exceptionDetect(QueryMetricProperty queryMetricProperty,Integer type);
+    ResponseEntity<ResultBean> exceptionDetect(QueryMetricProperty queryMetricProperty, Integer type) throws ExecutionException, InterruptedException;
+
+
+    /**
+     * 根据指标名获取指标筛选条件
+     *
+     * @param metricsName
+     * @param minute      分钟单位
+     * @return
+     */
+    ResponseEntity<ResultBean> getConditionByMetricsName(String metricsName, Integer minute);
+
+    /**
+     * 根据指标名和条件获取相应数据并进行预测,返回最新点是否异常的预测结果值
+     *
+     * @param metricName 指标名带%s
+     * @param span       秒钟单位,距离当前多少秒钟的数据
+     * @param step       秒钟单位, 步长
+     */
+    List<MatrixData> getRangeValues(String metricName, Integer span, Integer step, Map<String, String> conditions) throws ExecutionException, InterruptedException;
+
+//    /**
+//     * 根据指标名和条件获取最新点,返回最新点是否异常的预测结果值
+//     *
+//     * @param metricName 指标名带%s
+//     * @param conditions 条件
+//     */
+//    ResponseEntity<ResultBean> getInstantValues(String metricName, Map<String, String> conditions);
 
     /**
      * 获取公司普罗米修斯监控端点
+     *
      * @return
      */
     ResponseEntity<ResultBean> getTargets();
+
     /**
      * 即时查询
      * 如果time缺省，则用当前服务器时间表示执行时刻
@@ -54,6 +82,18 @@ public interface PromQLService {
      * @return
      */
     List<MatrixData> rangeQuery(String query, Date start, Date end, Integer step);
+
+    /**
+     * 范围查询map结果集
+     *
+     * @param query
+     * @param start
+     * @param end
+     * @param step
+     * @return
+     */
+
+    List<Map<String, Object>> rangeQueryToList(String query, Date start, Date end, Integer step);
 
     /**
      * 查询元数据

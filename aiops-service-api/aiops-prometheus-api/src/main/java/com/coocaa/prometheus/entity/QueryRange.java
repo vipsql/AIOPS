@@ -3,6 +3,7 @@ package com.coocaa.prometheus.entity;
 import lombok.*;
 
 import java.util.Date;
+import java.util.Map;
 
 /**
  * @program: intelligent_maintenance
@@ -18,5 +19,7 @@ public class QueryRange {
     private String query;
     private Date start;
     private Date end;
+    private Integer span;
     private Integer step;
+    private Map<String, String> conditions;
 }
