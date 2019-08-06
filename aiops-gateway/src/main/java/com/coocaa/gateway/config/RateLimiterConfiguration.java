@@ -6,7 +6,6 @@ import org.springframework.context.annotation.Configuration;
 import reactor.core.publisher.Mono;
 
 /**
- * @program: intelligent_maintenance
  * @description: 路由限流配置
  * @author: dongyang_wu
  * @create: 2019-07-28 21:25

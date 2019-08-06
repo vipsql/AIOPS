@@ -4,6 +4,7 @@ import com.coocaa.common.request.RequestBean;
 import com.coocaa.user.entity.User;
 import com.coocaa.core.mybatis.base.BaseService;
 import com.coocaa.user.entity.UserInfo;
+import com.coocaa.user.input.UserInputVo;
 
 import java.util.List;
 
@@ -19,4 +20,9 @@ public interface UserService extends BaseService<User> {
     User getUser();
 
     List<User> getByAttr(RequestBean requestBean);
+
+    User insertOrUpdate(UserInputVo userInputVo);
+
+    User fillUserTeams(User user);
+
 }

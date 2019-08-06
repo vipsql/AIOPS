@@ -2,11 +2,13 @@ package com.coocaa.prometheus.util.runnable;
 
 import com.alibaba.fastjson.JSON;
 import com.coocaa.common.constant.Constant;
+import com.coocaa.core.tool.utils.DateUtil;
 import com.coocaa.core.tool.utils.SpringUtil;
 import com.coocaa.prometheus.entity.*;
 import com.coocaa.prometheus.event.ErrorTaskPublisher;
 import com.coocaa.prometheus.util.TaskManager;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -32,7 +34,7 @@ public class QueryMetricTask implements Runnable {
                 if (queryRange == null) {
                     queryRange = JSON.parseObject(task.getArgs(), QueryRange.class);
                 }
-                List<MatrixData> rangeValues = TaskManager.getPromQLService().getRangeValues(queryRange.getQuery(), queryRange.getSpan(), queryRange.getStep(), queryRange.getConditions());
+                List<MatrixData> rangeValues = TaskManager.getPromQLService().getRangeValues(new Date(), queryRange.getQuery(), queryRange.getSpan(), queryRange.getStep(), queryRange.getConditions());
                 // 判断数据是否异常，异常则加入异常列表并发通知给负责人
                 // 发给team中的所有成员
                 // TaskManager.getTimingDataSender().send(JSONArray.toJSONString(rangeValues));

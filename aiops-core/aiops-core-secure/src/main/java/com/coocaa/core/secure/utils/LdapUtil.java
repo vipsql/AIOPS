@@ -11,7 +11,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * @program: intelligent_maintenance
  * @description: 酷开域账号登录
  * @author: dongyang_wu
  * @create: 2019-07-30 20:02

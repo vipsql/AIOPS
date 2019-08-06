@@ -1,0 +1,32 @@
+= 智能运维小组 接口文档系统
+
+
+[[_overview]]
+== Overview
+智能运维小组 接口文档系统
+
+
+=== Version information
+[%hardbreaks]
+__Version__ : 2.3.1
+
+
+=== Contact information
+[%hardbreaks]
+__Contact__ : Admin
+__Contact Email__ : 13058142866@163.com
+
+
+=== URI scheme
+[%hardbreaks]
+__Host__ : localhost:10003
+__BasePath__ : /
+
+
+=== Tags
+
+* Prometheus指标接口 : Metrics Controller
+* Prometheus接口 : Prometheus Controller
+
+
+

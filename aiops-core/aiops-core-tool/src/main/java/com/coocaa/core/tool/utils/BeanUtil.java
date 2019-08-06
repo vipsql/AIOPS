@@ -30,7 +30,7 @@ import java.util.*;
 /**
  * 实体工具类
  *
- * @author L.cm
+ * @author dongyang_wu
  */
 public class BeanUtil extends org.springframework.beans.BeanUtils {
 

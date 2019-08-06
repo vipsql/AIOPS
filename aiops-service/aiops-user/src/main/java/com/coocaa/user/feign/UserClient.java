@@ -8,6 +8,7 @@ import com.coocaa.user.entity.UserInfo;
 import com.coocaa.user.service.UserService;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
 
 /**
  * 用户服务Feign实现类
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @AllArgsConstructor
+@ApiIgnore
 public class UserClient implements IUserClient {
 
     UserService userService;

@@ -5,6 +5,7 @@ import com.coocaa.detector.entity.*;
 import com.coocaa.detector.servcie.MetisService;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.RestController;
+import springfox.documentation.annotations.ApiIgnore;
 
 /**
  * @program: intelligent_maintenance
@@ -14,7 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @AllArgsConstructor
-public class DetectorFeign implements IDetectorFeign {
+@ApiIgnore
+public class DetectorClient implements IDetectorClient {
     private MetisService metisService;
 
     @Override

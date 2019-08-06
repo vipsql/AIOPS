@@ -1412,8 +1412,34 @@ public class StringUtil extends org.springframework.util.StringUtils {
         return Pattern.compile("\t|\r|\n| ").matcher(str).replaceAll("");
     }
 
+    /**
+     * 首尾字符串加上逗号
+     *
+     * @param s
+     * @return
+     */
     public static String getCommaStr(Object s) {
         return "," + s + ",";
+    }
+
+    /**
+     * 首尾字符串加上百分号%
+     *
+     * @param s
+     * @return
+     */
+    public static String addPercentageSign(Object s) {
+        return "%" + s + "%";
+    }
+
+    /**
+     * 首尾字符串加上括号
+     *
+     * @param s
+     * @return
+     */
+    public static String addBrackets(Object s) {
+        return "(" + s + ")";
     }
 }
 

@@ -7,14 +7,41 @@ package com.coocaa.common.constant;
  * @create: 2019-07-31 09:20
  */
 public interface TableConstant {
+    /**
+     * 用于分页显示基本脚本常量开始
+     */
+    String GET_PAGE_ALL = "<script>" + TableConstant.SELECT_ALL;
+    String GET_PAGE_ALL_CONDITION = TableConstant.LOGIC_EXIST_STR +
+            "<if test='conditions!=null '>" +
+            "and ${conditions} " +
+            "</if>" +
+            "limit #{page},#{count}" +
+            "</script>";
+
+    String GET_PAGE_ALL_SIZE = "<script>" + TableConstant.SELECT_COUNT;
+    String GET_PAGE_ALL_SIZE_CONDITION = TableConstant.LOGIC_EXIST_STR +
+            "<if test='conditions!=null '>" +
+            "and ${conditions} " +
+            "</if></script>";
+    /**
+     * 用于分页显示基本脚本常量结束
+     */
+    String LOGIC_EXIST_STR = TableConstant.WHERE + TableConstant.LOGIC_EXIST;
     String ID = "id";
     String STATUS = "status";
     String LOGIC = "logic";
+    Integer LOGIC_EXIST_CONSTANT = 0;
+    Integer LOGIC_NOT_EXIST_CONSTANT = 1;
+    String LOGIC_EXIST = TableConstant.LOGIC + " = 0 ";
+    String SELECT_COUNT = "SELECT COUNT(*) FROM ";
+    String SELECT_ALL = "SELECT * FROM ";
+    String WHERE = " WHERE ";
 
     interface TABLE {
         String TABLE_TASK = "task";
         String TABLE_USER = "user";
         String TABLE_TEAM = "team";
+        String TABLE_METRICS = "metrics";
     }
 
     interface USER {
@@ -27,6 +54,5 @@ public interface TableConstant {
     }
 
     interface TEAM {
-        String ATTR = "SELECT id,name,admin_user_id,create_time,update_time FROM ";
     }
 }

@@ -7,6 +7,7 @@ import com.coocaa.common.constant.RedisConstant;
 import com.coocaa.core.boot.redis.RedisUtil;
 import com.coocaa.core.log.exception.ApiException;
 import com.coocaa.core.log.exception.ApiResultEnum;
+import com.coocaa.core.secure.constant.AppConstant;
 import com.coocaa.core.secure.constant.TokenConstant;
 import com.coocaa.core.secure.utils.LdapUtil;
 import com.coocaa.core.secure.utils.SecureUtil;
@@ -68,14 +69,14 @@ public class AuthServiceImpl implements AuthService {
         String token = "";
         User user;
         if (!R.isSuccess(apiResult)) {
-            LDAPEntry userInfo = ldapUtil.validAndGetUser("zhanghonghao@coocaa.com", "xxx");
+            LDAPEntry userInfo = ldapUtil.validAndGetUser(account, password);
             String[] userInfos = userInfo.getDN().split(",");
             String name = userInfo.getAttributeSet().getAttribute("name").getStringValue();
             user = User.builder()
                     .name(name)
                     .account(name)
                     .mail(userInfo.getAttributeSet().getAttribute("mail").getStringValue())
-                    .mobile(userInfo.getAttributeSet().getAttribute("mobile").getStringValue())
+                    .mobile(userInfo.getAttributeSet().getAttribute("mobile") == null ? "" : userInfo.getAttributeSet().getAttribute("mobile").getStringValue())
                     .company(userInfos[4].split("=")[1])
                     .department(userInfos[3].split("=")[1])
                     .departmentGroup(userInfos[2].split("=")[1])
@@ -114,7 +115,7 @@ public class AuthServiceImpl implements AuthService {
         param.put(TokenConstant.USER_NAME, user.getName());
 //        param.put(TokenConstant.ROLE_NAME, Func.join(res.getData().getRoles()));
         //拼装accessToken
-        String accessToken = SecureUtil.createJWT(param, "audience", "issuser", true);
+        String accessToken = SecureUtil.createJWT(param, "audience", "issuser", true, AppConstant.TOKEN_EXPIRE_TIME);
         return accessToken;
     }
 

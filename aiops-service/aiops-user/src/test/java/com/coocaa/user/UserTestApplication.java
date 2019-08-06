@@ -31,7 +31,5 @@ public class UserTestApplication {
     public void testForeignKey(){
         User user = userMapper.getUser(1L);
         System.out.println(user);
-        System.out.println(user.getMachines());
-        System.out.println(user.getMachines().size());
     }
 }

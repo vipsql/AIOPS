@@ -1,0 +1,733 @@
+
+[[_paths]]
+== Paths
+
+[[_getsusingpost]]
+=== 分页获取指标列表
+....
+POST /metrics/
+....
+
+
+==== Parameters
+
+[options="header", cols=".^2a,.^3a,.^9a,.^4a"]
+|===
+|Type|Name|Description|Schema
+|**Header**|**AIOPS-TOKEN** +
+__optional__|header中AIOPS-TOKEN字段用于使用API的验证|string
+|**Body**|**pageRequestBean** +
+__required__|pageRequestBean|<<_pagerequestbean,PageRequestBean>>
+|===
+
+
+==== Responses
+
+[options="header", cols=".^2a,.^14a,.^4a"]
+|===
+|HTTP Code|Description|Schema
+|**200**|OK|<<_246f1981a75c0819c9d3ee36d02f088f,响应对象>>
+|**201**|Created|No Content
+|**401**|Unauthorized|No Content
+|**403**|Forbidden|No Content
+|**404**|Not Found|No Content
+|===
+
+
+==== Consumes
+
+* `application/json`
+
+
+==== Produces
+
+* `\*/*`
+
+
+==== Tags
+
+* Prometheus指标接口
+
+
+==== Security
+
+[options="header", cols=".^3a,.^4a"]
+|===
+|Type|Name
+|**oauth2**|**<<_,>>**
+|===
+
+
+[[_getsusingget]]
+=== 获取指标清单
+....
+GET /metrics/
+....
+
+
+==== Parameters
+
+[options="header", cols=".^2a,.^3a,.^9a,.^4a"]
+|===
+|Type|Name|Description|Schema
+|**Header**|**AIOPS-TOKEN** +
+__optional__|header中AIOPS-TOKEN字段用于使用API的验证|string
+|===
+
+
+==== Responses
+
+[options="header", cols=".^2a,.^14a,.^4a"]
+|===
+|HTTP Code|Description|Schema
+|**200**|OK|<<_246f1981a75c0819c9d3ee36d02f088f,响应对象>>
+|**401**|Unauthorized|No Content
+|**403**|Forbidden|No Content
+|**404**|Not Found|No Content
+|===
+
+
+==== Produces
+
+* `\*/*`
+
+
+==== Tags
+
+* Prometheus指标接口
+
+
+==== Security
+
+[options="header", cols=".^3a,.^4a"]
+|===
+|Type|Name
+|**oauth2**|**<<_,>>**
+|===
+
+
+[[_getconditionbymetricsnameusingget]]
+=== 获取某个指标的标签及可取的值
+....
+GET /metrics/condition/{minute}
+....
+
+
+==== Description
+例:
+metricsName:http_requests_total
+minute:分钟单位,多少分钟内的标签及其取值
+
+
+==== Parameters
+
+[options="header", cols=".^2a,.^3a,.^9a,.^4a"]
+|===
+|Type|Name|Description|Schema
+|**Header**|**AIOPS-TOKEN** +
+__optional__|header中AIOPS-TOKEN字段用于使用API的验证|string
+|**Path**|**minute** +
+__required__|minute|integer (int32)
+|**Query**|**metricsName** +
+__required__|metricsName|string
+|===
+
+
+==== Responses
+
+[options="header", cols=".^2a,.^14a,.^4a"]
+|===
+|HTTP Code|Description|Schema
+|**200**|OK|<<_246f1981a75c0819c9d3ee36d02f088f,响应对象>>
+|**401**|Unauthorized|No Content
+|**403**|Forbidden|No Content
+|**404**|Not Found|No Content
+|===
+
+
+==== Produces
+
+* `\*/*`
+
+
+==== Tags
+
+* Prometheus指标接口
+
+
+==== Security
+
+[options="header", cols=".^3a,.^4a"]
+|===
+|Type|Name
+|**oauth2**|**<<_,>>**
+|===
+
+
+[[_createmetricsusingpost]]
+=== 新建或修改指标
+....
+POST /metrics/create/{type}
+....
+
+
+==== Description
+新建时—–type:0不启动定时任务,1启动定时任务
+修改时—–type:0不重新启动定时任务,1重新启动定时任务
+例： {"id": 1,
+ "metricName": "http请求数",
+ "teamIds": "11 11",
+ "modelIds": "11 13",
+ "taskCron": "0/17 * * * * ?",
+ "taskId": 32,
+ "queryRange": {
+ "query": "http_requests_total%s",
+ "span": 86400,
+ "step": 60,
+ "conditions": {
+ "instance": "172.16.20.143:3903"
+ }
+
+
+==== Parameters
+
+[options="header", cols=".^2a,.^3a,.^9a,.^4a"]
+|===
+|Type|Name|Description|Schema
+|**Header**|**AIOPS-TOKEN** +
+__optional__|header中AIOPS-TOKEN字段用于使用API的验证|string
+|**Path**|**type** +
+__required__|type|integer (int32)
+|**Body**|**metricsInputVo** +
+__required__|metricsInputVo|<<_metricsinputvo,MetricsInputVo>>
+|===
+
+
+==== Responses
+
+[options="header", cols=".^2a,.^14a,.^4a"]
+|===
+|HTTP Code|Description|Schema
+|**200**|OK|<<_246f1981a75c0819c9d3ee36d02f088f,响应对象>>
+|**201**|Created|No Content
+|**401**|Unauthorized|No Content
+|**403**|Forbidden|No Content
+|**404**|Not Found|No Content
+|===
+
+
+==== Consumes
+
+* `application/json`
+
+
+==== Produces
+
+* `\*/*`
+
+
+==== Tags
+
+* Prometheus指标接口
+
+
+==== Security
+
+[options="header", cols=".^3a,.^4a"]
+|===
+|Type|Name
+|**oauth2**|**<<_,>>**
+|===
+
+
+[[_deleteusingpost]]
+=== 批量删除
+....
+POST /metrics/delete
+....
+
+
+==== Parameters
+
+[options="header", cols=".^2a,.^3a,.^9a,.^4a"]
+|===
+|Type|Name|Description|Schema
+|**Header**|**AIOPS-TOKEN** +
+__optional__|header中AIOPS-TOKEN字段用于使用API的验证|string
+|**Body**|**requestBean** +
+__required__|requestBean|<<_requestbean,RequestBean>>
+|===
+
+
+==== Responses
+
+[options="header", cols=".^2a,.^14a,.^4a"]
+|===
+|HTTP Code|Description|Schema
+|**200**|OK|<<_246f1981a75c0819c9d3ee36d02f088f,响应对象>>
+|**201**|Created|No Content
+|**401**|Unauthorized|No Content
+|**403**|Forbidden|No Content
+|**404**|Not Found|No Content
+|===
+
+
+==== Consumes
+
+* `application/json`
+
+
+==== Produces
+
+* `\*/*`
+
+
+==== Tags
+
+* Prometheus指标接口
+
+
+==== Security
+
+[options="header", cols=".^3a,.^4a"]
+|===
+|Type|Name
+|**oauth2**|**<<_,>>**
+|===
+
+
+[[_exportmetiscsvusingpost]]
+=== 导出指定时间段指定时间跨度的Metis训练数据
+....
+POST /metrics/export
+....
+
+
+==== Parameters
+
+[options="header", cols=".^2a,.^3a,.^9a,.^4a"]
+|===
+|Type|Name|Description|Schema
+|**Header**|**AIOPS-TOKEN** +
+__optional__|header中AIOPS-TOKEN字段用于使用API的验证|string
+|**Body**|**metisCsvInputVo** +
+__required__|metisCsvInputVo|<<_metiscsvinputvo,MetisCsvInputVo>>
+|===
+
+
+==== Responses
+
+[options="header", cols=".^2a,.^14a,.^4a"]
+|===
+|HTTP Code|Description|Schema
+|**200**|OK|No Content
+|**201**|Created|No Content
+|**401**|Unauthorized|No Content
+|**403**|Forbidden|No Content
+|**404**|Not Found|No Content
+|===
+
+
+==== Consumes
+
+* `application/json`
+
+
+==== Produces
+
+* `\*/*`
+
+
+==== Tags
+
+* Prometheus指标接口
+
+
+==== Security
+
+[options="header", cols=".^3a,.^4a"]
+|===
+|Type|Name
+|**oauth2**|**<<_,>>**
+|===
+
+
+[[_exportmetiscsvtotrainusingpost]]
+=== 导出指定时间段指定时间跨度的Metis训练数据并传入metis进行训练
+....
+POST /metrics/train
+....
+
+
+==== Parameters
+
+[options="header", cols=".^2a,.^3a,.^9a,.^4a"]
+|===
+|Type|Name|Description|Schema
+|**Header**|**AIOPS-TOKEN** +
+__optional__|header中AIOPS-TOKEN字段用于使用API的验证|string
+|**Body**|**metisCsvInputVo** +
+__required__|metisCsvInputVo|<<_metiscsvinputvo,MetisCsvInputVo>>
+|===
+
+
+==== Responses
+
+[options="header", cols=".^2a,.^14a,.^4a"]
+|===
+|HTTP Code|Description|Schema
+|**200**|OK|<<_246f1981a75c0819c9d3ee36d02f088f,响应对象>>
+|**201**|Created|No Content
+|**401**|Unauthorized|No Content
+|**403**|Forbidden|No Content
+|**404**|Not Found|No Content
+|===
+
+
+==== Consumes
+
+* `application/json`
+
+
+==== Produces
+
+* `\*/*`
+
+
+==== Tags
+
+* Prometheus指标接口
+
+
+==== Security
+
+[options="header", cols=".^3a,.^4a"]
+|===
+|Type|Name
+|**oauth2**|**<<_,>>**
+|===
+
+
+[[_createusingpost]]
+=== 添加、修改或删除Prometheus需要监控的机器服务(instance不可重复)
+....
+POST /prometheus/config/{type}/{mode}
+....
+
+
+==== Description
+instance:实例名;
+targets:监控机器ip(例:39.108.106.167:8086);
+type:0为设置指标路径为ip:port/metrics的服务—–1为设置ip:port/actuator/prometheus的服务;
+mode为0新增或修改已存在的instance—–为1为删除指定instance的配置
+
+
+==== Parameters
+
+[options="header", cols=".^2a,.^3a,.^9a,.^4a"]
+|===
+|Type|Name|Description|Schema
+|**Header**|**AIOPS-TOKEN** +
+__optional__|header中AIOPS-TOKEN字段用于使用API的验证|string
+|**Path**|**mode** +
+__required__|mode|integer (int32)
+|**Path**|**type** +
+__required__|type|integer (int32)
+|**Body**|**prometheusConfigs** +
+__required__|prometheusConfigs|< <<_prometheusconfig,PrometheusConfig>> > array
+|===
+
+
+==== Responses
+
+[options="header", cols=".^2a,.^14a,.^4a"]
+|===
+|HTTP Code|Description|Schema
+|**200**|OK|<<_246f1981a75c0819c9d3ee36d02f088f,响应对象>>
+|**201**|Created|No Content
+|**401**|Unauthorized|No Content
+|**403**|Forbidden|No Content
+|**404**|Not Found|No Content
+|===
+
+
+==== Consumes
+
+* `application/json`
+
+
+==== Produces
+
+* `\*/*`
+
+
+==== Tags
+
+* Prometheus接口
+
+
+==== Security
+
+[options="header", cols=".^3a,.^4a"]
+|===
+|Type|Name
+|**oauth2**|**<<_,>>**
+|===
+
+
+[[_createtaskusingpost]]
+=== 新建或更新监控定时任务(会重新启动定时任务可用于更改时间粒度)
+....
+POST /prometheus/create
+....
+
+
+==== Description
+task例:{
+ taskId: 16,
+ type: 0定期拉取数据进行异常检测1定期拉取数据传入metis进行训练,
+ taskName: 业务访问量定时任务,
+ taskDescription: 业务访问量定时任务,
+ taskCron: 0/17 * * * * ?,
+ queryMetric: http请求量,
+ queryRange: {
+ query: http_requests_total%s,
+ span: 86400
+ step: 60
+ conditions: {
+ instance: 172.16.20.142:3903
+ }
+ }
+ 传id更新不传id新建
+
+
+==== Parameters
+
+[options="header", cols=".^2a,.^3a,.^9a,.^4a"]
+|===
+|Type|Name|Description|Schema
+|**Header**|**AIOPS-TOKEN** +
+__optional__|header中AIOPS-TOKEN字段用于使用API的验证|string
+|**Body**|**task** +
+__required__|task|<<_taskinputvo,TaskInputVo>>
+|===
+
+
+==== Responses
+
+[options="header", cols=".^2a,.^14a,.^4a"]
+|===
+|HTTP Code|Description|Schema
+|**200**|OK|<<_246f1981a75c0819c9d3ee36d02f088f,响应对象>>
+|**201**|Created|No Content
+|**401**|Unauthorized|No Content
+|**403**|Forbidden|No Content
+|**404**|Not Found|No Content
+|===
+
+
+==== Consumes
+
+* `application/json`
+
+
+==== Produces
+
+* `\*/*`
+
+
+==== Tags
+
+* Prometheus接口
+
+
+==== Security
+
+[options="header", cols=".^3a,.^4a"]
+|===
+|Type|Name
+|**oauth2**|**<<_,>>**
+|===
+
+
+[[_stoptaskusingpost]]
+=== 删除、停止或禁用监控定时任务
+....
+POST /prometheus/stop/{type}
+....
+
+
+==== Description
+query: 对应数据库表键值如id
+queryString: 对应查询值如17
+type: 0删除1停止2禁用
+
+
+==== Parameters
+
+[options="header", cols=".^2a,.^3a,.^9a,.^4a"]
+|===
+|Type|Name|Description|Schema
+|**Header**|**AIOPS-TOKEN** +
+__optional__|header中AIOPS-TOKEN字段用于使用API的验证|string
+|**Path**|**type** +
+__required__|type|integer (int32)
+|**Body**|**requestBean** +
+__required__|requestBean|<<_requestbean,RequestBean>>
+|===
+
+
+==== Responses
+
+[options="header", cols=".^2a,.^14a,.^4a"]
+|===
+|HTTP Code|Description|Schema
+|**200**|OK|<<_246f1981a75c0819c9d3ee36d02f088f,响应对象>>
+|**201**|Created|No Content
+|**401**|Unauthorized|No Content
+|**403**|Forbidden|No Content
+|**404**|Not Found|No Content
+|===
+
+
+==== Consumes
+
+* `application/json`
+
+
+==== Produces
+
+* `\*/*`
+
+
+==== Tags
+
+* Prometheus接口
+
+
+==== Security
+
+[options="header", cols=".^3a,.^4a"]
+|===
+|Type|Name
+|**oauth2**|**<<_,>>**
+|===
+
+
+[[_gettargetsusingget]]
+=== 获取公司普罗米修斯监控项
+....
+GET /prometheus/targets
+....
+
+
+==== Parameters
+
+[options="header", cols=".^2a,.^3a,.^9a,.^4a"]
+|===
+|Type|Name|Description|Schema
+|**Header**|**AIOPS-TOKEN** +
+__optional__|header中AIOPS-TOKEN字段用于使用API的验证|string
+|===
+
+
+==== Responses
+
+[options="header", cols=".^2a,.^14a,.^4a"]
+|===
+|HTTP Code|Description|Schema
+|**200**|OK|<<_246f1981a75c0819c9d3ee36d02f088f,响应对象>>
+|**401**|Unauthorized|No Content
+|**403**|Forbidden|No Content
+|**404**|Not Found|No Content
+|===
+
+
+==== Produces
+
+* `\*/*`
+
+
+==== Tags
+
+* Prometheus接口
+
+
+==== Security
+
+[options="header", cols=".^3a,.^4a"]
+|===
+|Type|Name
+|**oauth2**|**<<_,>>**
+|===
+
+
+[[_getvaluesusingpost]]
+=== 根据指标名、筛选条件、时间间隔和步长获取具体时间端的数据同时判断dateTime时间点是否异常
+....
+POST /prometheus/values
+....
+
+
+==== Description
+metricsName: http_requests_total%s(%s不可省,为存放条件的位置)
+dateTime: Unix时间戳(1565045729)
+span: 秒钟单位,距date多少秒钟的数据
+step: 秒钟单位,步长
+conditions: 条件的map(调用condition接口可以获取到可取的值)
+返回有效值:
+metric:对应指标名
+values:相应时刻与对应的值
+detectResult:指定date时刻异常检测结果
+
+
+==== Parameters
+
+[options="header", cols=".^2a,.^3a,.^9a,.^4a"]
+|===
+|Type|Name|Description|Schema
+|**Header**|**AIOPS-TOKEN** +
+__optional__|header中AIOPS-TOKEN字段用于使用API的验证|string
+|**Body**|**getValuesInput** +
+__required__|getValuesInput|<<_getvaluesinput,GetValuesInput>>
+|===
+
+
+==== Responses
+
+[options="header", cols=".^2a,.^14a,.^4a"]
+|===
+|HTTP Code|Description|Schema
+|**200**|OK|<<_246f1981a75c0819c9d3ee36d02f088f,响应对象>>
+|**201**|Created|No Content
+|**401**|Unauthorized|No Content
+|**403**|Forbidden|No Content
+|**404**|Not Found|No Content
+|===
+
+
+==== Consumes
+
+* `application/json`
+
+
+==== Produces
+
+* `\*/*`
+
+
+==== Tags
+
+* Prometheus接口
+
+
+==== Security
+
+[options="header", cols=".^3a,.^4a"]
+|===
+|Type|Name
+|**oauth2**|**<<_,>>**
+|===
+
+
+

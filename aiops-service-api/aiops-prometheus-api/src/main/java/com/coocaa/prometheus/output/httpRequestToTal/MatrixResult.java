@@ -7,7 +7,6 @@ import lombok.*;
 import java.util.List;
 
 /**
- * @program: intelligent_maintenance
  * @description: 异常检测结果
  * @author: dongyang_wu
  * @create: 2019-08-02 15:52

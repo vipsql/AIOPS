@@ -9,6 +9,9 @@ import org.apache.ibatis.mapping.FetchType;
 import java.util.List;
 
 public interface TeamMapper extends BaseMapper<Team> {
+    String GET_PAGE_ALL = TableConstant.GET_PAGE_ALL + TableConstant.TABLE.TABLE_TEAM + TableConstant.GET_PAGE_ALL_CONDITION;
+    String GET_PAGE_ALL_SIZE = TableConstant.GET_PAGE_ALL_SIZE + TableConstant.TABLE.TABLE_TEAM + TableConstant.GET_PAGE_ALL_SIZE_CONDITION;
+    String SELECT_BY_ID_IN_USER = TableConstant.SELECT_ALL + TableConstant.TABLE.TABLE_TEAM + TableConstant.WHERE + TableConstant.ID + " in ${conditions}";
 
     @Results({
             @Result(column = "id", property = "id", id = true),
@@ -23,6 +26,12 @@ public interface TeamMapper extends BaseMapper<Team> {
                     )
             )
     })
-    @Select({TableConstant.TEAM.ATTR, TableConstant.TABLE.TABLE_TEAM, " limit #{page},#{count}"})
-    List<Team> getTeams(Integer page, Integer count);
+    @Select(value = GET_PAGE_ALL)
+    List<Team> getPageAll(Integer page, Integer count, String conditions);
+
+    @Select(value = GET_PAGE_ALL_SIZE)
+    Integer getPageAllSize(@Param("conditions") String conditions);
+
+    @Select(value = SELECT_BY_ID_IN_USER)
+    List<Team> selectByIdInUser(@Param("conditions") String conditions);
 }

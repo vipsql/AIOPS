@@ -9,6 +9,7 @@ import com.coocaa.prometheus.util.TaskManager;
 import lombok.AllArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
+import springfox.documentation.annotations.ApiIgnore;
 
 /**
  * @program: intelligent_maintenance
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @AllArgsConstructor
+@ApiIgnore
 public class TaskClient implements ITaskClient {
     private TaskService taskService;
     private TaskManager taskManager;

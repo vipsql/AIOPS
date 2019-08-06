@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 
 /**
- * @program: intelligent_maintenance
  * @description: 服务发现控制器
  * @author: dongyang_wu
  * @create: 2019-07-28 21:25

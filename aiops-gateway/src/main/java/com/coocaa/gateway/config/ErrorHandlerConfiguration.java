@@ -19,7 +19,6 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * @program: intelligent_maintenance
  * @description: 异常处理配置类
  * @author: dongyang_wu
  * @create: 2019-07-28 21:25

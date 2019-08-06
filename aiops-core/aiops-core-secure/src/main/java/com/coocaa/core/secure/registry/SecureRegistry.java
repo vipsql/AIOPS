@@ -22,7 +22,7 @@ import java.util.*;
 /**
  * secure api放行配置
  *
- * @author Chill
+ * @author dongyang_wu
  */
 @Data
 public class SecureRegistry {

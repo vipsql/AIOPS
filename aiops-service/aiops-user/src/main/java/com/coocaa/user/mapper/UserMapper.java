@@ -14,20 +14,31 @@ import java.util.List;
  * @create: 2019-07-29 14:52
  */
 public interface UserMapper extends BaseMapper<User> {
-    String SELECT_BY_TEAMID = "SELECT * FROM " + TableConstant.TABLE.TABLE_USER + " WHERE FIND_IN_SET(#{teamId}," + TableConstant.USER.TEAM_IDS + ")";
+    String SELECT_BY_TEAMID_ALL = TableConstant.SELECT_ALL + TableConstant.TABLE.TABLE_USER + TableConstant.LOGIC_EXIST_STR + " AND FIND_IN_SET(#{teamId}," + TableConstant.USER.TEAM_IDS + ")";
+    String SELECT_BY_TEAMID_ALL_SIZE = TableConstant.SELECT_COUNT + TableConstant.TABLE.TABLE_USER + TableConstant.LOGIC_EXIST_STR + " AND FIND_IN_SET(#{teamId}," + TableConstant.USER.TEAM_IDS + ")";
+    String SELECT_BY_TEAMID_PAGE = TableConstant.SELECT_ALL + TableConstant.TABLE.TABLE_USER + TableConstant.LOGIC_EXIST_STR + " AND FIND_IN_SET(#{teamId}," + TableConstant.USER.TEAM_IDS + ") LIMIT #{page},#{count}";
+    String GET_PAGE_ALL = TableConstant.GET_PAGE_ALL + TableConstant.TABLE.TABLE_USER + TableConstant.GET_PAGE_ALL_CONDITION;
+    String GET_PAGE_ALL_SIZE = TableConstant.GET_PAGE_ALL_SIZE + TableConstant.TABLE.TABLE_USER + TableConstant.GET_PAGE_ALL_SIZE_CONDITION;
 
-    @Results({
-            @Result(column = "id", property = "machines",
-                    many = @Many(
-                            select = "com.coocaa.user.mapper.MachineMapper.selectByUserId",
-                            fetchType = FetchType.EAGER
-                    )
-            )
-    })
     @Select("SELECT * FROM `user` WHERE id = #{id}")
     User getUser(Long id);
 
-    @Select(value = SELECT_BY_TEAMID)
+    // 获取响应Team下的所有用户开始
+    @Select(value = SELECT_BY_TEAMID_ALL)
     List<User> selectByTeamId(Long teamId);
 
+    @Select(value = SELECT_BY_TEAMID_PAGE)
+    List<User> selectByTeamIdPage(Long teamId, Integer page, Integer count);
+
+    @Select(value = SELECT_BY_TEAMID_ALL_SIZE)
+    Integer selectByTeamIdSize(Long teamId);
+    // 获取响应Team下的所有用户结束
+
+    // 分页获取数据开始
+    @Select(value = GET_PAGE_ALL)
+    List<User> getPageAll(Integer page, Integer count, String conditions);
+
+    @Select(value = GET_PAGE_ALL_SIZE)
+    Integer getPageAllSize(@Param("conditions") String conditions);
+    // 分页获取数据结束
 }

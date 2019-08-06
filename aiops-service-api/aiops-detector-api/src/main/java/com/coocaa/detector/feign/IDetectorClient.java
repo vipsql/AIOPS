@@ -8,15 +8,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 /**
- * @program: intelligent_maintenance
  * @description: 内部调用
  * @author: dongyang_wu
  * @create: 2019-08-02 10:52
  */
 @FeignClient(
-        value = AppConstant.APPLICATION_DETECTOR_NAME
+        value = AppConstant.APPLICATION_DETECTOR_NAME,
+        fallback = IDetectorClientFallback.class
 )
-public interface IDetectorFeign {
+public interface IDetectorClient {
     String API_PREFIX = "/detector";
 
     @PostMapping(API_PREFIX + "/detect")

@@ -3,7 +3,7 @@ package com.coocaa.user.input;
 import lombok.*;
 
 /**
- * @description:
+ * @description: Team输入实体类
  * @author: dongyang_wu
  * @create: 2019-08-05 19:43
  */

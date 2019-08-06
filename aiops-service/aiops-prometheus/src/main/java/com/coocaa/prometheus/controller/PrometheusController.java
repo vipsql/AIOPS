@@ -8,8 +8,7 @@ import com.coocaa.core.log.response.ResponseHelper;
 import com.coocaa.core.log.response.ResultBean;
 import com.coocaa.prometheus.entity.PrometheusConfig;
 import com.coocaa.prometheus.entity.Task;
-import com.coocaa.prometheus.input.QueryMetricProperty;
-import com.coocaa.prometheus.input.TaskInputVo;
+import com.coocaa.prometheus.input.*;
 import com.coocaa.prometheus.service.PromQLService;
 import com.coocaa.prometheus.service.TaskService;
 import com.coocaa.prometheus.util.FileJsonUtil;
@@ -20,8 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -30,6 +28,7 @@ import java.util.concurrent.ExecutionException;
  * @create: 2019-07-31 22:34
  */
 @RestController
+@RequestMapping("/prometheus")
 @Api(value = "对接Prometheus接口模块", tags = "Prometheus接口")
 @AllArgsConstructor
 public class PrometheusController {
@@ -61,6 +60,7 @@ public class PrometheusController {
                     "    \"end\": \"2019-08-02 10:03:43\",\n" +
                     "    \"step\": 60\n" +
                     "  }")
+    @ApiIgnore
     public ResponseEntity<ResultBean> queryMetrics(@RequestBody Task task, @PathVariable Integer type) {
         return promQLService.queryMetrics(task, type);
     }
@@ -112,18 +112,25 @@ public class PrometheusController {
         return ResponseHelper.OK(queryMetricsTask);
     }
 
-    @PostMapping("/values/{metricsName}/{span}/{step}")
-    @ApiOperation(value = "根据指标名、筛选条件、时间间隔和步长获取具体时间端的数据同时判断最新点是否异常",
+    @PostMapping("/values")
+    @ApiOperation(value = "根据指标名、筛选条件、时间间隔和步长获取具体时间端的数据同时判断dateTime时间点是否异常",
             notes = "metricsName: http_requests_total%s(%s不可省,为存放条件的位置)  \n" +
-                    "span: 秒钟单位,距今多少秒钟的数据  \n" +
+                    "dateTime: Unix时间戳(1565045729) \n" +
+                    "span: 秒钟单位,距date多少秒钟的数据  \n" +
                     "step: 秒钟单位,步长  \n" +
                     "conditions: 条件的map(调用condition接口可以获取到可取的值)  \n" +
                     "返回有效值:  \n" +
                     "metric:对应指标名  \n" +
                     "values:相应时刻与对应的值  \n" +
-                    "detectResult:最新时刻异常检测结果  \n")
-    public ResponseEntity<ResultBean> getValues(@PathVariable String metricsName, @PathVariable Integer span, @PathVariable Integer step, @RequestBody Map<String, String> conditions) throws ExecutionException, InterruptedException {
-        return ResponseHelper.OK(promQLService.getRangeValues(metricsName, span, step, conditions));
+                    "detectResult:指定date时刻异常检测结果  \n")
+    public ResponseEntity<ResultBean> getValues(@RequestBody GetValuesInput getValuesInput) throws ExecutionException, InterruptedException {
+        Date date;
+        if (getValuesInput.getDateTime() == null) {
+            date = new Date();
+        } else {
+            date = new Date(getValuesInput.getDateTime() * 1000);
+        }
+        return ResponseHelper.OK(promQLService.getRangeValues(date, getValuesInput.getMetricsName(), getValuesInput.getSpan(), getValuesInput.getStep(), getValuesInput.getConditions()));
     }
 
     @GetMapping("/targets")
@@ -131,4 +138,5 @@ public class PrometheusController {
     public ResponseEntity<ResultBean> getTargets() {
         return promQLService.getTargets();
     }
+
 }

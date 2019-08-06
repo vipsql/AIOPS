@@ -1,7 +1,6 @@
 package com.coocaa.core.secure.constant;
 
 /**
- * @program: intelligent_maintenance
  * @description: 系统常量
  * @author: dongyang_wu
  * @create: 2019-07-28 21:11
@@ -68,6 +67,12 @@ public interface AppConstant {
      * 代码部署于 linux 上，工作默认为 mac 和 Windows
      */
     String OS_NAME_LINUX = "LINUX";
-
+    /**
+     * 用户token过期时间
+     */
     Long TOKEN_EXPIRE_TIME = 6 * 10000000L;
+    /**
+     * Feign内部调用过期时间
+     */
+    Long FEIGN_TOKEN_EXPIRE_TIME = 6 * 1000L;
 }

@@ -2,6 +2,7 @@ package com.coocaa.user.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 import com.baomidou.mybatisplus.extension.activerecord.Model;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import java.io.Serializable;
@@ -24,8 +25,9 @@ public class Team extends Model<Team> {
     private Long id;
     private String name;
     private Long adminUserId;
-//    @TableField(exist = false)
-//    private User adminUser;
+    @TableLogic
+    @JsonIgnore
+    private Integer logic;
     @TableField(exist = false)
     private List<User> userList;
     @TableField(fill = FieldFill.INSERT)
@@ -33,6 +35,8 @@ public class Team extends Model<Team> {
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
 
+    //    @TableField(exist = false)
+//    private User adminUser;
     @Override
     protected Serializable pkVal() {
         return this.id;

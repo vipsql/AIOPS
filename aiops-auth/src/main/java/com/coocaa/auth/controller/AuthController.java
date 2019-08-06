@@ -34,9 +34,9 @@ public class AuthController {
         if (Func.isEmpty(type)) {
             throw new ApiException(ApiResultEnum.QUERY_ARGS_ERROR);
         }
-        if (Constant.NumberType.ONE_PROPERTY.equals(type)) {
+        if (Constant.NumberType.ZERO_PROPERTY.equals(type)) {
             return authService.token(loginUserVo.getUserName(), loginUserVo.getPassword());
-        } else if (Constant.NumberType.TWO_PROPERTY.equals(type)) {
+        } else if (Constant.NumberType.ONE_PROPERTY.equals(type)) {
             return authService.tokenByLdap(loginUserVo.getUserName(), loginUserVo.getPassword());
         }
         throw new ApiException(ApiResultEnum.FUNCTION_NOT_EXEC_ERROR);

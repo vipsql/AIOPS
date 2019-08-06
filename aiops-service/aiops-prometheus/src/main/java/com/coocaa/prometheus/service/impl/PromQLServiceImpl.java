@@ -11,11 +11,12 @@ import com.coocaa.core.tool.base.BaseException;
 import com.coocaa.core.tool.response.CodeEnum;
 import com.coocaa.core.tool.utils.*;
 import com.coocaa.detector.entity.*;
-import com.coocaa.detector.feign.IDetectorFeign;
+import com.coocaa.detector.feign.IDetectorClient;
 import com.coocaa.prometheus.common.PromBaseLables;
 import com.coocaa.prometheus.common.PromNorm;
 import com.coocaa.prometheus.entity.*;
 import com.coocaa.prometheus.input.QueryMetricProperty;
+import com.coocaa.prometheus.output.MetricsCsvVo;
 import com.coocaa.prometheus.output.httpRequestToTal.MatrixResult;
 import com.coocaa.prometheus.service.PromQLService;
 import com.coocaa.prometheus.util.PromQLUtil;
@@ -49,7 +50,7 @@ public class PromQLServiceImpl implements PromQLService {
     @Autowired
     private RestTemplate restTemplate;
     @Autowired
-    private IDetectorFeign detectorFeign;
+    private IDetectorClient detectorFeign;
     @Value("${web.server.prometheus.apiUrl}")
     private String serverUrl;
 
@@ -97,7 +98,7 @@ public class PromQLServiceImpl implements PromQLService {
             queryMetricProperty.setMetricsName(PromNorm.NODE_MEMORY_CACHED_BYTES);
             realQuery = getRealHttpTotalQuery(queryMetricProperty);
         }
-        List<MatrixData> realResult = detectByMetis(realQuery, null);
+        List<MatrixData> realResult = detectByMetis(new Date(), realQuery, null);
         return ResponseHelper.OK(realResult);
     }
 
@@ -133,12 +134,11 @@ public class PromQLServiceImpl implements PromQLService {
     }
 
     @Override
-    public List<MatrixData> getRangeValues(String metricName, Integer span, Integer step, Map<String, String> conditions) throws ExecutionException, InterruptedException {
+    public List<MatrixData> getRangeValues(Date date, String metricName, Integer span, Integer step, Map<String, String> conditions) throws ExecutionException, InterruptedException {
         String realQuery = PromQLUtil.getQueryConditionStr(metricName, conditions);
-        Date end = new Date();
-        Date begin = DateUtil.setSeconds(end, -span);
-        List<MatrixData> matrixData = rangeQuery(realQuery, begin, end, step);
-        List<MatrixData> realResult = detectByMetis(realQuery, matrixData);
+        Date begin = DateUtil.setSeconds(date, -span);
+        List<MatrixData> matrixData = rangeQuery(realQuery, begin, date, step);
+        List<MatrixData> realResult = detectByMetis(date, realQuery, matrixData);
         return realResult;
     }
 
@@ -189,8 +189,45 @@ public class PromQLServiceImpl implements PromQLService {
         return jsonArray;
     }
 
-    private List<MatrixData> detectByMetis(String realQuery, List<MatrixData> matrixDatas) throws ExecutionException, InterruptedException {
-        Date now = new Date();
+    @Override
+    public List<MetricsCsvVo> createMetisCsvVo(Date now, String realQuery, Long viewId, Long attrId) throws ExecutionException, InterruptedException {
+        System.out.println("-----------当前时刻");
+        Date date = DateUtil.setHours(now, -3);
+        CompletableFuture<List<MatrixData>> metisDataAsyncA = getMetisDataFirst(realQuery, date, now);
+        System.out.println("------------一天前");
+        Date yesterday = DateUtil.setDays(now, -1);
+        CompletableFuture<List<String>> metisDataAsyncB = getMetisData(realQuery, DateUtil.setHours(yesterday, -3), DateUtil.setHours(yesterday, 3));
+        System.out.println("------------一周前");
+        Date weekEarlier = DateUtil.setWeeks(now, -1);
+        CompletableFuture<List<String>> metisDataAsyncC = getMetisData(realQuery, DateUtil.setHours(weekEarlier, -3), DateUtil.setHours(weekEarlier, 3));
+        // 等待3者执行完成 多线程异步执行
+        CompletableFuture.allOf(metisDataAsyncA, metisDataAsyncB, metisDataAsyncC).join();
+        List<MatrixData> metisDataA = metisDataAsyncA.get();
+        List<String> metisDataB = metisDataAsyncB.get();
+        List<String> metisDataC = metisDataAsyncC.get();
+        List<MetricsCsvVo> resultLists = new ArrayList<>();
+        for (int i = 0; i < metisDataA.size(); i++) {
+            MatrixData matrixData = metisDataA.get(i);
+            MetricsCsvVo metricsCsvVo = MetricsCsvVo.builder()
+                    .viewId(viewId)
+                    .viewName("指标集")
+                    .attrName(matrixData.getMetric().getInstance())
+                    .attrId(attrId)
+                    .dataA(matrixData.getMetisData())
+                    .dataB(metisDataB.get(i))
+                    .dataC(metisDataC.get(i))
+                    .dateTime(now.getTime() / 1000)
+                    .window("180")
+                    .source("aiops")
+                    .trainOrTest("train")
+                    .positiveOrNegative("positive")
+                    .build();
+            resultLists.add(metricsCsvVo);
+        }
+        return resultLists;
+    }
+
+    private List<MatrixData> detectByMetis(Date now, String realQuery, List<MatrixData> matrixDatas) throws ExecutionException, InterruptedException {
         System.out.println("-----------当前时刻");
         Date date = DateUtil.setHours(now, -3);
         CompletableFuture<List<MatrixData>> metisDataAsyncA = getMetisDataFirst(realQuery, date, now);

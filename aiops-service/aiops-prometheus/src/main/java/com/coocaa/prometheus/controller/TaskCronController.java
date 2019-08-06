@@ -11,6 +11,7 @@ import com.coocaa.prometheus.service.TaskService;
 import lombok.AllArgsConstructor;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
 
 import javax.validation.Valid;
 
@@ -25,6 +26,7 @@ import javax.validation.Valid;
 @RestController
 @RequestMapping("/taskCron")
 @AllArgsConstructor
+@ApiIgnore
 public class TaskCronController {
 
     private TaskService taskCronService;

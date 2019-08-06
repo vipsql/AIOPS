@@ -1,0 +1,207 @@
+
+[[_definitions]]
+== Definitions
+
+[[_getvaluesinput]]
+=== GetValuesInput
+
+[options="header", cols=".^3a,.^4a"]
+|===
+|Name|Schema
+|**conditions** +
+__optional__|< string, string > map
+|**dateTime** +
+__optional__|integer (int64)
+|**metricsName** +
+__optional__|string
+|**span** +
+__optional__|integer (int32)
+|**step** +
+__optional__|integer (int32)
+|===
+
+
+[[_labelsbean]]
+=== LabelsBean
+
+[options="header", cols=".^3a,.^4a"]
+|===
+|Name|Schema
+|**instance** +
+__optional__|string
+|===
+
+
+[[_metiscsvinputvo]]
+=== MetisCsvInputVo
+
+[options="header", cols=".^3a,.^4a"]
+|===
+|Name|Schema
+|**begin** +
+__optional__|string (date-time)
+|**end** +
+__optional__|string (date-time)
+|**metricsId** +
+__optional__|integer (int64)
+|**span** +
+__optional__|integer (int32)
+|===
+
+
+[[_metricsinputvo]]
+=== MetricsInputVo
+
+[options="header", cols=".^3a,.^4a"]
+|===
+|Name|Schema
+|**id** +
+__optional__|integer (int64)
+|**metricName** +
+__optional__|string
+|**modelIds** +
+__optional__|string
+|**queryRange** +
+__optional__|<<_queryrange,QueryRange>>
+|**taskCron** +
+__optional__|string
+|**taskId** +
+__optional__|integer (int32)
+|**teamIds** +
+__optional__|string
+|===
+
+
+[[_pagerequestbean]]
+=== PageRequestBean
+
+[options="header", cols=".^3a,.^4a"]
+|===
+|Name|Schema
+|**conditionConnection** +
+__optional__|string
+|**conditions** +
+__optional__|< <<_pagerequestitem,PageRequestItem>> > array
+|**count** +
+__optional__|integer (int32)
+|**page** +
+__optional__|integer (int32)
+|===
+
+
+[[_pagerequestitem]]
+=== PageRequestItem
+
+[options="header", cols=".^3a,.^4a"]
+|===
+|Name|Schema
+|**connection** +
+__optional__|string
+|**query** +
+__optional__|string
+|**queryString** +
+__optional__|string
+|===
+
+
+[[_prometheusconfig]]
+=== PrometheusConfig
+
+[options="header", cols=".^3a,.^4a"]
+|===
+|Name|Schema
+|**labels** +
+__optional__|<<_labelsbean,LabelsBean>>
+|**targets** +
+__optional__|< string > array
+|===
+
+
+[[_queryrange]]
+=== QueryRange
+
+[options="header", cols=".^3a,.^4a"]
+|===
+|Name|Schema
+|**conditions** +
+__optional__|< string, string > map
+|**end** +
+__optional__|string (date-time)
+|**query** +
+__optional__|string
+|**span** +
+__optional__|integer (int32)
+|**start** +
+__optional__|string (date-time)
+|**step** +
+__optional__|integer (int32)
+|===
+
+
+[[_requestbean]]
+=== RequestBean
+
+[options="header", cols=".^3a,.^4a"]
+|===
+|Name|Schema
+|**items** +
+__optional__|< <<_requestitem,RequestItem>> > array
+|===
+
+
+[[_requestitem]]
+=== RequestItem
+
+[options="header", cols=".^3a,.^4a"]
+|===
+|Name|Schema
+|**query** +
+__optional__|string
+|**queryString** +
+__optional__|string
+|===
+
+
+[[_taskinputvo]]
+=== TaskInputVo
+
+[options="header", cols=".^3a,.^4a"]
+|===
+|Name|Schema
+|**queryMetric** +
+__optional__|string
+|**queryRange** +
+__optional__|<<_queryrange,QueryRange>>
+|**subscribeName** +
+__optional__|string
+|**taskCron** +
+__optional__|string
+|**taskDescription** +
+__optional__|string
+|**taskId** +
+__optional__|integer (int32)
+|**taskName** +
+__optional__|string
+|**type** +
+__optional__|integer (int32)
+|===
+
+
+[[_246f1981a75c0819c9d3ee36d02f088f]]
+=== 响应对象
+
+[options="header", cols=".^3a,.^11a,.^4a"]
+|===
+|Name|Description|Schema
+|**code** +
+__optional__|响应码|integer (int32)
+|**data** +
+__optional__|响应的json数据|object
+|**msg** +
+__optional__|响应的msg提示|string
+|**success** +
+__required__|是否成功|boolean
+|===
+
+
+

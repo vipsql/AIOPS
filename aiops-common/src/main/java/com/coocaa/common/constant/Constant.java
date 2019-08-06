@@ -1,5 +1,8 @@
 package com.coocaa.common.constant;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class Constant {
 
 
@@ -27,5 +30,10 @@ public class Constant {
         Integer SIX_PROPERTY = 6;
         Integer SEVEN_PROPERTY = 7;
         Integer EIGHT_PROPERTY = 8;
+    }
+
+    public interface MetisCsv {
+        List<String> columns = Arrays.asList("viewName", "viewId", "attrName", "attrId", "source", "trainOrTest", "positiveOrNegative", "window", "dataC", "dataB", "dataA", "dateTime");
+        List<String> columnCns = Arrays.asList("指标集名称", "指标集id", "指标名称", "指标id", "数据来源", "训练集/测试集", "正样本/负样本", "样本窗口", "dataC", "dataB", "dataA", "数据时间戳");
     }
 }

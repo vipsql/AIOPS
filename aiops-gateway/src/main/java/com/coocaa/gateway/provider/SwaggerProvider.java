@@ -13,7 +13,6 @@ import springfox.documentation.swagger.web.SwaggerResourcesProvider;
 import java.util.*;
 
 /**
- * @program: intelligent_maintenance
  * @description: 聚合文档注册
  * @author: dongyang_wu
  * @create: 2019-07-28 21:11
@@ -22,21 +21,18 @@ import java.util.*;
 @Component
 @AllArgsConstructor
 public class SwaggerProvider implements SwaggerResourcesProvider {
-    public static final String API_URI = "/v2/api-docs-ext";
-    //    public static final String API_URI = "/v2/api-docs";
+    //    public static final String API_URI = "/v2/api-docs-ext";
+    public static final String API_URI = "/v2/api-docs";
     private final RouteLocator routeLocator;
     private final GatewayProperties gatewayProperties;
     private static Map<String, String> routeMap = new HashMap<>();
 
     static {
         routeMap.put(AppConstant.APPLICATION_AUTH_NAME, "授权服务");
-//		routeMap.put(AppConstant.APPLICATION_DESK_NAME, "工作台模块");
-//		routeMap.put(AppConstant.APPLICATION_SYSTEM_NAME, "系统模块");
-//		routeMap.put(AppConstant.APPLICATION_USER_NAME, "用户模块");
-//		routeMap.put(AppConstant.APPLICATION_FILE_PPT_PDF_NAME, "PPTPDF文件服务");
         routeMap.put(AppConstant.APPLICATION_USER_NAME, "用户服务");
         routeMap.put(AppConstant.APPLICATION_NOTICE_NAME, "邮件通知服务");
         routeMap.put(AppConstant.APPLICATION_DETECTOR_NAME, "异常检测服务");
+        routeMap.put(AppConstant.APPLICATION_TASK_NAME, "对接Promtheus服务");
     }
 
     @Override

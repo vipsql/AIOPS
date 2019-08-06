@@ -13,5 +13,6 @@ public interface AuthService {
     ResponseEntity<ResultBean> token(String account, String password);
 
     ResponseEntity<ResultBean> tokenByLdap(String account, String password);
+
     String testCache(String a);
 }

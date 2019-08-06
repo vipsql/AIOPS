@@ -12,6 +12,7 @@
         <result column="mail" property="mail"/>
         <result column="name" property="name"/>
         <result column="salt" property="salt"/>
+        <result column="wechat" property="wechat"/>
         <result column="account" property="account"/>
         <result column="password" property="password"/>
         <result column="team_ids" property="teamIds"/>
