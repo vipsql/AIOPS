@@ -1,8 +1,11 @@
 package com.coocaa.prometheus.util;
 
 import com.coocaa.core.tool.utils.SpringUtil;
+import com.coocaa.notice.feign.INoticeClient;
 import com.coocaa.prometheus.rabbitMQ.TimingDataSender;
+import com.coocaa.prometheus.service.MetricsService;
 import com.coocaa.prometheus.service.PromQLService;
+import com.coocaa.prometheus.service.impl.AsyncServiceTask;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.TaskScheduler;
@@ -23,15 +26,17 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Component("TaskManager")
 public class TaskManager implements DisposableBean {
-    private final Map<Integer, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>(16);
-    private final Map<Integer, AtomicInteger> taskErrorTimes = new ConcurrentHashMap<>(16);
+    private final Map<Long, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>(16);
+    private final Map<Long, AtomicInteger> taskErrorTimes = new ConcurrentHashMap<>(16);
     @Autowired
     private TaskScheduler taskScheduler;
     private volatile static PromQLService promQLService;
     private volatile static TimingDataSender timingDataSender;
+    private volatile static AsyncServiceTask asyncServiceTask;
+    private volatile static MetricsService metricsService;
     private volatile Integer notifyNumber = 5;
 
-    public void addCronTask(Integer taskId, Runnable task, String cronExpression) {
+    public void addCronTask(Long taskId, Runnable task, String cronExpression) {
         if (this.scheduledTasks.containsKey(taskId)) {
             removeCronTask(taskId);
         }
@@ -40,7 +45,7 @@ public class TaskManager implements DisposableBean {
     }
 
     @Transactional
-    public synchronized boolean removeCronTask(Integer taskId) {
+    public synchronized boolean removeCronTask(Long taskId) {
         if (this.scheduledTasks.containsKey(taskId)) {
             ScheduledFuture<?> scheduledTask = this.scheduledTasks.remove(taskId);
             if (scheduledTask != null && !scheduledTask.isCancelled()) {
@@ -59,12 +64,12 @@ public class TaskManager implements DisposableBean {
         this.scheduledTasks.clear();
     }
 
-    public synchronized Boolean isOverErrorTimes(Integer taskId) {
+    public synchronized Boolean isOverErrorTimes(Long taskId) {
         taskErrorTimes.putIfAbsent(taskId, new AtomicInteger(0));
         return taskErrorTimes.get(taskId).getAndIncrement() > notifyNumber;
     }
 
-    public synchronized void deleteErrorTimesMap(Integer taskId) {
+    public synchronized void deleteErrorTimesMap(Long taskId) {
         taskErrorTimes.remove(taskId);
     }
 
@@ -94,5 +99,33 @@ public class TaskManager implements DisposableBean {
             }
         }
         return timingDataSender;
+    }
+
+    public static AsyncServiceTask getAsyncServiceTask() {
+        //第一重判断
+        if (asyncServiceTask == null) {
+            //锁定代码块
+            synchronized (AsyncServiceTask.class) {
+                //第二重判断
+                if (asyncServiceTask == null) {
+                    asyncServiceTask = SpringUtil.getBean(AsyncServiceTask.class);
+                }
+            }
+        }
+        return asyncServiceTask;
+    }
+
+    public static MetricsService getMetricsService() {
+        //第一重判断
+        if (metricsService == null) {
+            //锁定代码块
+            synchronized (MetricsService.class) {
+                //第二重判断
+                if (metricsService == null) {
+                    metricsService = SpringUtil.getBean(MetricsService.class);
+                }
+            }
+        }
+        return metricsService;
     }
 }

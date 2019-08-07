@@ -76,9 +76,9 @@ swagger:
   description: SpringBlade 接口文档系统
   version: 2.3.1
   license: Powered By 智能运维小组
-  licenseUrl: https://bladex.vip
-  terms-of-service-url: https://bladex.vip
+  licenseUrl: https://github.com/Kaiser-love
+  terms-of-service-url: https://github.com/Kaiser-love
   contact:
-    name: smallchill
-    email: smallchill@163.com
-    url: https://gitee.com/smallc
+    name: dongyang_wu
+    email: 13058142866@163.com
+    url: https://github.com/Kaiser-love

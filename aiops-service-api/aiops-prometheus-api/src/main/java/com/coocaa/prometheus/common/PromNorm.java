@@ -57,7 +57,7 @@ public class PromNorm {
      */
     public static final String NODE_NETWORK_RECEIVE_BYTES_TOTAL = "irate(node_network_receive_bytes_total%s[5m])*8";
     /**
-     * 内存cache node_memory_Cached_bytes
+     * 内存
      */
     public static final String NODE_MEMORY_CACHED_BYTES = "node_memory_Cached_bytes%s";
 

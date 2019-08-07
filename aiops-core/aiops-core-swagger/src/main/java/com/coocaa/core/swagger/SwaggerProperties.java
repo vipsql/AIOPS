@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @program: intelligent_maintenance
  * @description: SwaggerProperties
  * @author: dongyang_wu
  * @create: 2019-07-28 21:11

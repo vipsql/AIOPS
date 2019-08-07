@@ -8,6 +8,9 @@ import com.coocaa.user.entity.UserInfo;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Set;
+
 /**
  * User Feign接口类
  *
@@ -35,5 +38,15 @@ public interface IUserClient {
 
     @PostMapping(API_PREFIX + "/insert")
     R<Integer> insert(@RequestBody User user);
+
+    /**
+     * 获取Team下的所有User
+     *
+     * @param teamIds
+     * @param connection
+     * @return
+     */
+    @GetMapping(API_PREFIX + "/getTeamUsers")
+    R<Set<User>> getTeamUsers(@RequestParam("teamIds") String teamIds, @RequestParam("connection") String connection);
 
 }

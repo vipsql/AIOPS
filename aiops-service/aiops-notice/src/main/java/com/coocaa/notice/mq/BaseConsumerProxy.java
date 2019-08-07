@@ -47,7 +47,8 @@ public class BaseConsumerProxy {
                 Object result = method.invoke(target, args);
                 msgLogService.updateStatus(Long.valueOf(correlationId), Constant.MsgLogStatus.CONSUMED_SUCCESS);
                 // 消费确认
-                channel.basicAck(tag, false);
+                if (channel.isOpen())
+                    channel.basicAck(tag, false);
                 return result;
             } catch (Exception e) {
                 log.error("getProxy error", e);

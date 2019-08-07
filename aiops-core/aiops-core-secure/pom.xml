@@ -20,7 +20,6 @@
             <artifactId>jjwt</artifactId>
             <version>0.9.1</version>
         </dependency>
-        <!--Blade-->
         <dependency>
             <groupId>com.coocaa</groupId>
             <artifactId>aiops-core-tool</artifactId>

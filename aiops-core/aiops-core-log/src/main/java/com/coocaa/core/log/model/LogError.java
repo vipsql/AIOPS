@@ -24,7 +24,7 @@ import java.io.Serializable;
 /**
  * 服务 异常
  *
- * @author Chill
+ * @author dongyang_wu
  */
 @Data
 @TableName("log_error")

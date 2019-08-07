@@ -36,7 +36,7 @@ public interface UserMapper extends BaseMapper<User> {
 
     // 分页获取数据开始
     @Select(value = GET_PAGE_ALL)
-    List<User> getPageAll(Integer page, Integer count, String conditions);
+    List<User> getPageAll(Integer page, Integer count, String conditions, String orderBy, String sortType);
 
     @Select(value = GET_PAGE_ALL_SIZE)
     Integer getPageAllSize(@Param("conditions") String conditions);

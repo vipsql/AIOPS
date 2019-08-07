@@ -17,7 +17,7 @@ package com.coocaa.core.log.event;
 
 
 import com.coocaa.core.log.feign.ILogClient;
-import com.coocaa.core.log.props.BladeProperties;
+import com.coocaa.core.log.props.AiopsProperties;
 import com.coocaa.core.log.server.ServerInfo;
 import com.coocaa.core.log.constant.EventConstant;
 import com.coocaa.core.log.model.LogUsual;
@@ -41,7 +41,7 @@ public class UsualLogListener {
 
 	private final ILogClient logService;
 	private final ServerInfo serverInfo;
-	private final BladeProperties bladeProperties;
+	private final AiopsProperties aiopsProperties;
 
 	@Async
 	@Order
@@ -49,7 +49,7 @@ public class UsualLogListener {
 	public void saveUsualLog(UsualLogEvent event) {
 		Map<String, Object> source = (Map<String, Object>) event.getSource();
 		LogUsual logUsual = (LogUsual) source.get(EventConstant.EVENT_LOG);
-		LogAbstractUtil.addOtherInfoToLog(logUsual, bladeProperties, serverInfo);
+		LogAbstractUtil.addOtherInfoToLog(logUsual, aiopsProperties, serverInfo);
 		logService.saveUsualLog(logUsual);
 	}
 

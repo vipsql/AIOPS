@@ -7,7 +7,9 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.coocaa.common.constant.Constant;
 import com.coocaa.common.constant.TableConstant;
 import com.coocaa.common.request.RequestBean;
+import com.coocaa.core.mybatis.base.BaseServiceImpl;
 import com.coocaa.core.tool.utils.SqlUtil;
+import com.coocaa.prometheus.entity.QueryRange;
 import com.coocaa.prometheus.entity.Task;
 import com.coocaa.prometheus.input.TaskInputVo;
 import com.coocaa.prometheus.mapper.TaskMapper;
@@ -31,7 +33,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @AllArgsConstructor
-public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements TaskService {
+public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implements TaskService {
     private TaskManager taskManager;
     private TaskMapper taskMapper;
 
@@ -39,12 +41,14 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
     public Task createQueryMetricsTask(TaskInputVo taskInputVo) {
         Task task = new Task();
         BeanUtils.copyProperties(taskInputVo, task);
-        task.setArgs(JSON.toJSONString(task.getQueryRange()));
+        QueryRange queryRange = task.getQueryRange();
+        if (queryRange != null)
+            task.setArgs(JSON.toJSONString(queryRange));
         task.setStatus(Constant.NumberType.GOOD_PROPERTY);
         boolean insert = task.insertOrUpdate();
         if (insert) {
-            QueryMetricTask queryMetricTask = new QueryMetricTask(task, task.getType());
-            taskManager.addCronTask(task.getTaskId(), queryMetricTask, task.getTaskCron());
+            QueryMetricTask queryMetricTask = new QueryMetricTask(task, task.getType() == null ? 0 : task.getType());
+            taskManager.addCronTask(task.getId(), queryMetricTask, task.getTaskCron());
         }
         return task;
     }
@@ -52,7 +56,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
     @Override
     @Transactional
     public Boolean removeQueryMetricsTask(RequestBean requestbean, Integer type) {
-        Set<Integer> taskIdSets = new HashSet<>();
+        Set<Long> taskIdSets = new HashSet<>();
         requestbean.getItems().forEach(item -> {
             List<Task> tasks = taskMapper.selectByMap(SqlUtil.map(item.getQuery(), item.getQueryString()).build());
             if (Constant.NumberType.TWO_PROPERTY.equals(type)) {
@@ -63,14 +67,14 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
                 });
             }
             // 获取指定的sets
-            List<Integer> ids = tasks.stream().map(Task::getTaskId).collect(Collectors.toList());
+            List<Long> ids = tasks.stream().map(Task::getId).collect(Collectors.toList());
             taskIdSets.addAll(ids);
         });
         boolean deleteFlag = Constant.NumberType.ZERO_PROPERTY.equals(type);
         taskIdSets.forEach(item -> {
             taskManager.removeCronTask(item);
             if (deleteFlag) {
-                taskMapper.deleteByMap(SqlUtil.map(TableConstant.TASK.TASK_ID, item.toString()).build());
+                taskMapper.deleteByMap(SqlUtil.map(TableConstant.ID, item.toString()).build());
             }
         });
         return true;
@@ -81,7 +85,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
         List<Task> tasks = taskMapper.findAll();
         tasks.forEach(task -> {
             QueryMetricTask queryMetricTask = new QueryMetricTask(task, task.getType());
-            taskManager.addCronTask(task.getTaskId(), queryMetricTask, task.getTaskCron());
+            taskManager.addCronTask(task.getId(), queryMetricTask, task.getTaskCron());
         });
     }
 

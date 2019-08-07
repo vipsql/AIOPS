@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.coocaa.common.request.RequestBean;
+import com.coocaa.core.mybatis.base.BaseService;
 import com.coocaa.prometheus.entity.Task;
 import com.coocaa.prometheus.input.TaskInputVo;
 
@@ -13,7 +14,7 @@ import com.coocaa.prometheus.input.TaskInputVo;
  * @author: dongyang_wu
  * @create: 2019-08-01 13:45
  */
-public interface TaskService extends IService<Task> {
+public interface TaskService extends BaseService<Task> {
     /**
      * 新增或更新定时任务
      */

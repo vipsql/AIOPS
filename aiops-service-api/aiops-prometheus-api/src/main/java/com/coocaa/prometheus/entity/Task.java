@@ -8,6 +8,7 @@ import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
 import java.util.Date;
 
+
 /**
  * <p>
  * 定时任务信息
@@ -29,8 +30,8 @@ public class Task extends Model<Task> {
     /**
      * 任务 ID
      */
-    @TableId(value = "task_id", type = IdType.AUTO)
-    private Integer taskId;
+    @TableId(value = "id", type = IdType.AUTO)
+    private Long id;
 
     /**
      * 任务名
@@ -48,16 +49,6 @@ public class Task extends Model<Task> {
      */
     @NotEmpty(message = "定时计划不能为空")
     private String taskCron;
-    /**
-     * 查询指标描述
-     */
-    @NotEmpty(message = "查询指标不能为空")
-    private String queryMetric;
-    /**
-     * 客户端订阅URL
-     */
-    @NotEmpty(message = "客户端订阅URL不能为空")
-    private String subscribeName;
 
     private Integer type;
     /**
@@ -70,13 +61,17 @@ public class Task extends Model<Task> {
      */
     private String args;
     /**
-     * 定时任务所拉取的普罗米修斯机器
-     */
-    private Long machineId;
-    /**
      * 是否启用0禁用 1启用
      */
     private Byte status;
+    /**
+     * 定时任务所属指标ID
+     */
+    private Long metricsId;
+    /**
+     * 指标选用模型名
+     */
+    private String modelName;
     @TableField(exist = false)
     private QueryInstant queryInstant;
     @TableField(exist = false)
@@ -96,7 +91,7 @@ public class Task extends Model<Task> {
 
     @Override
     protected Serializable pkVal() {
-        return this.taskId;
+        return this.id;
     }
 
 }

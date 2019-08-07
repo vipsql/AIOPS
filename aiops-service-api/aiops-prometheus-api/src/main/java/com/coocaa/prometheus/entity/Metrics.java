@@ -2,6 +2,7 @@ package com.coocaa.prometheus.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 import com.baomidou.mybatisplus.extension.activerecord.Model;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import java.io.Serializable;
@@ -27,23 +28,7 @@ public class Metrics extends Model<Metrics> {
      * team id集合
      */
     private String teamIds;
-    /**
-     * model id集合
-     */
-    private String modelIds;
-    /**
-     * 指标所对应的定时任务Id
-     */
-    private Integer taskId;
 
-    /**
-     * 查询条件JSON字符串
-     */
-    private String queryRangeJson;
-    /**
-     * 定时拉取数据频率
-     */
-    private String taskCron;
     /**
      * 更新时间
      */
@@ -55,6 +40,7 @@ public class Metrics extends Model<Metrics> {
     @TableField(value = "create_time", fill = FieldFill.INSERT)
     private Date createTime;
     @TableLogic
+    @JsonIgnore
     private Integer logic;
 
     @Override

@@ -11,4 +11,10 @@ public interface StringConstant {
 
     String AND ="and";
     String OR ="or";
+
+    String DESC = "desc";
+    String ASC = "asc";
+
+    String OK = "操作成功";
+    String FAIL = "操作失败";
 }

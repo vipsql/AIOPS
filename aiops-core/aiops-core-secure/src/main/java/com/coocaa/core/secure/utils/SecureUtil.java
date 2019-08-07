@@ -44,15 +44,15 @@ public class SecureUtil {
             return null;
         }
         // 优先从 request 中获取
-        Object bladeUser = request.getAttribute(BLADE_USER_REQUEST_ATTR);
-        if (bladeUser == null) {
-            bladeUser = getUser(request);
-            if (bladeUser != null) {
+        Object user = request.getAttribute(BLADE_USER_REQUEST_ATTR);
+        if (user == null) {
+            user = getUser(request);
+            if (user != null) {
                 // 设置到 request 中
-                request.setAttribute(BLADE_USER_REQUEST_ATTR, bladeUser);
+                request.setAttribute(BLADE_USER_REQUEST_ATTR, user);
             }
         }
-        return (AiOpsUser) bladeUser;
+        return (AiOpsUser) user;
     }
 
     /**
@@ -66,22 +66,18 @@ public class SecureUtil {
         if (claims == null) {
             return null;
         }
-        String clientId = Func.toStr(claims.get(SecureUtil.CLIENT_ID));
-        Integer userId = Func.toInt(claims.get(SecureUtil.USER_ID));
-        String tenantCode = Func.toStr(claims.get(SecureUtil.TENANT_CODE));
+        Long userId = Func.toLong(claims.get(SecureUtil.USER_ID));
         String roleId = Func.toStr(claims.get(SecureUtil.ROLE_ID));
         String account = Func.toStr(claims.get(SecureUtil.ACCOUNT));
         String roleName = Func.toStr(claims.get(SecureUtil.ROLE_NAME));
         String userName = Func.toStr(claims.get(SecureUtil.USER_NAME));
-        AiOpsUser bladeUser = new AiOpsUser();
-        bladeUser.setClientId(clientId);
-        bladeUser.setUserId(userId);
-        bladeUser.setTenantCode(tenantCode);
-        bladeUser.setAccount(account);
-        bladeUser.setRoleId(roleId);
-        bladeUser.setRoleName(roleName);
-        bladeUser.setUserName(userName);
-        return bladeUser;
+        AiOpsUser aiOpsUser = new AiOpsUser();
+        aiOpsUser.setUserId(userId);
+        aiOpsUser.setAccount(account);
+        aiOpsUser.setRoleId(roleId);
+        aiOpsUser.setRoleName(roleName);
+        aiOpsUser.setUserName(userName);
+        return aiOpsUser;
     }
 
 
@@ -90,7 +86,7 @@ public class SecureUtil {
      *
      * @return userId
      */
-    public static Integer getUserId() {
+    public static Long getUserId() {
         AiOpsUser user = getUser();
         return (null == user) ? -1 : user.getUserId();
     }
@@ -101,7 +97,7 @@ public class SecureUtil {
      * @param request request
      * @return userId
      */
-    public static Integer getUserId(HttpServletRequest request) {
+    public static Long getUserId(HttpServletRequest request) {
         AiOpsUser user = getUser(request);
         return (null == user) ? -1 : user.getUserId();
     }
@@ -169,47 +165,6 @@ public class SecureUtil {
         return (null == user) ? StringPool.EMPTY : user.getRoleName();
     }
 
-    /**
-     * 获取租户编号
-     *
-     * @return tenantCode
-     */
-    public static String getTenantCode() {
-        AiOpsUser user = getUser();
-        return (null == user) ? StringPool.EMPTY : user.getTenantCode();
-    }
-
-    /**
-     * 获取租户编号
-     *
-     * @param request request
-     * @return tenantCode
-     */
-    public static String getTenantCode(HttpServletRequest request) {
-        AiOpsUser user = getUser(request);
-        return (null == user) ? StringPool.EMPTY : user.getTenantCode();
-    }
-
-    /**
-     * 获取客户端id
-     *
-     * @return tenantCode
-     */
-    public static String getClientId() {
-        AiOpsUser user = getUser();
-        return (null == user) ? StringPool.EMPTY : user.getClientId();
-    }
-
-    /**
-     * 获取客户端id
-     *
-     * @param request request
-     * @return tenantCode
-     */
-    public static String getClientId(HttpServletRequest request) {
-        AiOpsUser user = getUser(request);
-        return (null == user) ? StringPool.EMPTY : user.getClientId();
-    }
 
     /**
      * 获取Claims

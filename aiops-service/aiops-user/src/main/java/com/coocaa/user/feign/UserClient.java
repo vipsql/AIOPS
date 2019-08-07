@@ -3,12 +3,14 @@ package com.coocaa.user.feign;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.coocaa.common.constant.TableConstant;
 import com.coocaa.core.tool.api.*;
-import com.coocaa.user.entity.User;
-import com.coocaa.user.entity.UserInfo;
+import com.coocaa.user.entity.*;
+import com.coocaa.user.service.TeamService;
 import com.coocaa.user.service.UserService;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
+
+import java.util.*;
 
 /**
  * 用户服务Feign实现类
@@ -20,7 +22,8 @@ import springfox.documentation.annotations.ApiIgnore;
 @ApiIgnore
 public class UserClient implements IUserClient {
 
-    UserService userService;
+    private UserService userService;
+    private TeamService teamService;
 
     @Override
     public R<UserInfo> userInfo(String account, String password) {
@@ -45,5 +48,9 @@ public class UserClient implements IUserClient {
         } catch (Exception e) {
         }
         return R.data(flag);
+    }
+
+    public R<Set<User>> getTeamUsers(String teamIds, String connection) {
+        return R.data(teamService.getTeamUsers(Arrays.asList(teamIds.split(" ")), connection));
     }
 }

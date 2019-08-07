@@ -1,5 +1,9 @@
 package com.coocaa.common.request;
 
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.coocaa.common.constant.StringConstant;
+import com.coocaa.common.constant.TableConstant;
+
 /**
  * @program: intelligent_maintenance
  * @description: 请求工具类
@@ -15,4 +19,20 @@ public class RequestUtil {
         }
         return false;
     }
+
+    public static void setDefaultPageBean(PageRequestBean pageRequestBean) {
+        if (pageRequestBean.getPage() == null) {
+            pageRequestBean.setPage(0);
+        }
+        if (pageRequestBean.getCount() == null) {
+            pageRequestBean.setCount(5);
+        }
+        if (pageRequestBean.getOrderBy() == null) {
+            pageRequestBean.setOrderBy(TableConstant.ID);
+        }
+        if (pageRequestBean.getSortType() == null) {
+            pageRequestBean.setSortType(StringConstant.DESC);
+        }
+    }
+
 }

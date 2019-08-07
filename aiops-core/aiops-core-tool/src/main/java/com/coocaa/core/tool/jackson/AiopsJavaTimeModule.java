@@ -26,7 +26,7 @@ import java.time.*;
 /**
  * java 8 时间默认序列化
  *
- * @author L.cm
+ * @author dongyang_wu
  */
 public class AiopsJavaTimeModule extends SimpleModule {
 

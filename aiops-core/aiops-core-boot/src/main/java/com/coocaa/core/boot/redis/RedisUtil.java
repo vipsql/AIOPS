@@ -9,7 +9,6 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
- * @program: intelligent_maintenance
  * @description: Redis工具类
  * @author: dongyang_wu
  * @create: 2019-07-30 11:29

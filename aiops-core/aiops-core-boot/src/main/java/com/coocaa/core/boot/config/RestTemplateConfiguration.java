@@ -8,7 +8,6 @@ import org.springframework.web.client.RestTemplate;
 
 
 /**
- * @program: intelligent_maintenance
  * @description:
  * @author: dongyang_wu
  * @create: 2019-07-31 12:02

@@ -1,7 +1,6 @@
 package com.coocaa.user.controller;
 
-import com.coocaa.common.request.PageRequestBean;
-import com.coocaa.common.request.RequestBean;
+import com.coocaa.common.request.*;
 import com.coocaa.core.tool.utils.SqlUtil;
 import com.coocaa.user.entity.User;
 import com.coocaa.user.input.UserInputVo;
@@ -41,8 +40,9 @@ public class UserController {
     @PostMapping
     @ApiOperation(value = "分页获取user列表,响应code为总数")
     ResponseEntity<ResultBean> gets(@RequestBody PageRequestBean pageRequestBean) {
+        RequestUtil.setDefaultPageBean(pageRequestBean);
         String conditionString = SqlUtil.getConditionString(pageRequestBean.getConditions(), pageRequestBean.getConditionConnection());
-        List<User> list = userMapper.getPageAll(pageRequestBean.getPage() * pageRequestBean.getCount(), pageRequestBean.getCount(), conditionString);
+        List<User> list = userMapper.getPageAll(pageRequestBean.getPage() * pageRequestBean.getCount(), pageRequestBean.getCount(), conditionString, pageRequestBean.getOrderBy(), pageRequestBean.getSortType());
         list.forEach(user -> userService.fillUserTeams(user));
         Integer pageAllSize = userMapper.getPageAllSize(conditionString);
         return ResponseHelper.OK(list, pageAllSize);

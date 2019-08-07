@@ -9,21 +9,22 @@ import com.coocaa.prometheus.input.MetricsInputVo;
 import com.coocaa.prometheus.output.MetricsCsvVo;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 public interface MetricsService extends BaseService<Metrics> {
     /**
      * 新建指标并启动定时任务
      *
-     * @param metrics
+     * @param metricsInputVo
      * @return
      */
     Metrics createMetrics(Integer type, MetricsInputVo metricsInputVo);
 
     /**
-     * 删除指定id的指标
+     * 获取指标清单
      */
-    boolean deleteMetrics(Long id, Integer type);
+    Map<String, String> getKPIListing();
 
     /**
      * 导出对应指标的Csv训练数据

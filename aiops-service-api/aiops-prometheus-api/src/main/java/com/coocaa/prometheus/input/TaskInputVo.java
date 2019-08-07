@@ -18,7 +18,7 @@ public class TaskInputVo {
     /**
      * 任务 ID
      */
-    private Integer taskId;
+    private Long id;
 
     /**
      * 任务名
@@ -37,18 +37,16 @@ public class TaskInputVo {
     @NotEmpty(message = "定时计划不能为空")
     private String taskCron;
     /**
-     * 查询指标描述
-     */
-    @NotEmpty(message = "查询指标不能为空")
-    private String queryMetric;
-    /**
-     * 客户端订阅URL
-     */
-    @NotEmpty(message = "客户端订阅URL")
-    private String subscribeName;
-    /**
      * 定时任务类型
      */
     private Integer type;
+    /**
+     * 模型名
+     */
+    private String modelName;
+    /**
+     * 定时任务所属指标
+     */
+    private Long metricsId;
     private QueryRange queryRange;
 }

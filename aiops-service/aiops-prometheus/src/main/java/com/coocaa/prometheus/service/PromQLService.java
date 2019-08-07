@@ -2,6 +2,7 @@ package com.coocaa.prometheus.service;
 
 
 import com.coocaa.core.log.response.ResultBean;
+import com.coocaa.prometheus.dto.MetisDto;
 import com.coocaa.prometheus.entity.*;
 import com.coocaa.prometheus.input.QueryMetricProperty;
 import com.coocaa.prometheus.output.MetricsCsvVo;
@@ -41,12 +42,12 @@ public interface PromQLService {
     /**
      * 根据指标名和条件获取相应数据并进行预测,返回最新点是否异常的预测结果值
      *
-     * @param date 检测时间点
+     * @param date       检测时间点
      * @param metricName 指标名带%s
      * @param span       秒钟单位,距离当前多少秒钟的数据
      * @param step       秒钟单位, 步长
      */
-    List<MatrixData> getRangeValues(Date date, String metricName, Integer span, Integer step, Map<String, String> conditions) throws ExecutionException, InterruptedException;
+    Map<String, MatrixData> getRangeValues(MetisDto metisDto, Date date, String metricName, Integer span, Integer step, Map<String, String> conditions) throws ExecutionException, InterruptedException;
 
 //    /**
 //     * 根据指标名和条件获取最新点,返回最新点是否异常的预测结果值

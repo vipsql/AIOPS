@@ -40,7 +40,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * 分读写的 json 消息 处理器
  *
- * @author L.cm
+ * @author dongyang_wu
  */
 public abstract class AbstractReadWriteJackson2HttpMessageConverter extends AbstractJackson2HttpMessageConverter {
 	private static final java.nio.charset.Charset DEFAULT_CHARSET = Charsets.UTF_8;

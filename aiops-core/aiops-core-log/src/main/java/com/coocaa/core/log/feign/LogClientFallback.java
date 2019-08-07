@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 /**
  * 日志fallback
  *
- * @author jiang
+ * @author dongyang_wu
  */
 @Slf4j
 @Component

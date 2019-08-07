@@ -13,20 +13,26 @@ import lombok.*;
 @NoArgsConstructor
 @Builder
 public class MetricsInputVo {
+    // 指标集属性开始
     private Long id;
     private String metricName;
     /**
      * team id集合
      */
     private String teamIds;
-    /**
-     * model id集合
-     */
-    private String modelIds;
+
+    // 指标集属性结束
+
+
+    // 指标属性开始
     /**
      * 指标所对应的定时任务Id
      */
-    private Integer taskId;
+    private Long taskId;
+    /**
+     * 指标名
+     */
+    private String taskName;
     /**
      * 查询条件JSON字符串
      */
@@ -35,4 +41,9 @@ public class MetricsInputVo {
      * 定时拉取数据频率
      */
     private String taskCron;
+    /**
+     * 模型名
+     */
+    private String modelName;
+    // 指标属性结束
 }

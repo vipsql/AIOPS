@@ -110,10 +110,10 @@ public class AuthServiceImpl implements AuthService {
         //设置jwt参数
         Map<String, String> param = new HashMap<>(16);
         param.put(TokenConstant.USER_ID, Func.toStr(user.getId()));
-//        param.put(TokenConstant.ROLE_ID, user.get());
+        param.put(TokenConstant.ROLE_ID, Func.toStr(1));
         param.put(TokenConstant.ACCOUNT, user.getAccount());
         param.put(TokenConstant.USER_NAME, user.getName());
-//        param.put(TokenConstant.ROLE_NAME, Func.join(res.getData().getRoles()));
+        param.put(TokenConstant.ROLE_NAME, "admin");
         //拼装accessToken
         String accessToken = SecureUtil.createJWT(param, "audience", "issuser", true, AppConstant.TOKEN_EXPIRE_TIME);
         return accessToken;

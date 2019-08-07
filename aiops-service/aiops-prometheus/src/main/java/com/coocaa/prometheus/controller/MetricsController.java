@@ -2,8 +2,7 @@ package com.coocaa.prometheus.controller;
 
 import com.alibaba.fastjson.JSONObject;
 import com.coocaa.common.constant.Constant;
-import com.coocaa.common.request.PageRequestBean;
-import com.coocaa.common.request.RequestBean;
+import com.coocaa.common.request.*;
 import com.coocaa.core.log.response.ResponseHelper;
 import com.coocaa.core.log.response.ResultBean;
 import com.coocaa.core.tool.utils.SqlUtil;
@@ -34,7 +33,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/metrics")
-@Api(value = "指标模块", tags = "Prometheus指标接口")
+@Api(description = "指标模块", tags = "指标接口")
 @AllArgsConstructor
 public class MetricsController {
     private PromQLService promQLService;
@@ -52,8 +51,8 @@ public class MetricsController {
 
     @PostMapping("/create/{type}")
     @ApiOperation(value = "新建或修改指标",
-            notes = "新建时-----type:0不启动定时任务,1启动定时任务  \n" +
-                    "修改时-----type:0不重新启动定时任务,1重新启动定时任务  \n" +
+            notes = "新建时-----type:0不同时新建定时任务,1同时新建并启动定时任务(id和taskId都要传才可新建)  \n" +
+                    "修改时-----type:0不修改定时任务,1修改并重新启动定时任务(id和taskId都要传才可修改)  \n" +
                     "例：          " +
                     "           {\"id\": 1,\n" +
                     "            \"metricName\": \"http请求数\",\n" +
@@ -72,36 +71,29 @@ public class MetricsController {
         return ResponseHelper.OK(metricsService.createMetrics(type, metricsInputVo));
     }
 
-    @DeleteMapping("/{id}/{type}")
-    @ApiOperation(value = "删除指定id的指标",
-            notes = "对指标对应的定时任务处理类型:  \n" +
-                    "type: 0删除1停止2禁用  \n")
-    @ApiIgnore
-    public ResponseEntity<ResultBean> delete(@PathVariable Long id, @PathVariable Integer type) {
-        return ResponseHelper.OK(metricsService.deleteMetrics(id, type));
-    }
 
-    @PostMapping("/delete")
+    @DeleteMapping("/delete")
     @ApiOperation(value = "批量删除")
     public ResponseEntity<ResultBean> delete(@RequestBody RequestBean requestBean) {
         metricsService.deletes(requestBean);
         return ResponseHelper.OK();
     }
 
-    @PostMapping("/")
+    @PostMapping
     @ApiOperation(value = "分页获取指标列表")
     public ResponseEntity<ResultBean> gets(@RequestBody PageRequestBean pageRequestBean) {
+        RequestUtil.setDefaultPageBean(pageRequestBean);
         String conditionString = SqlUtil.getConditionString(pageRequestBean.getConditions(), pageRequestBean.getConditionConnection());
-        List<Metrics> list = metricsMapper.getPageAll(pageRequestBean.getPage() * pageRequestBean.getCount(), pageRequestBean.getCount(), conditionString);
+        List<Metrics> list = metricsMapper.getPageAll(pageRequestBean.getPage() * pageRequestBean.getCount(), pageRequestBean.getCount(), conditionString, pageRequestBean.getOrderBy(), pageRequestBean.getSortType());
         Integer pageAllSize = metricsMapper.getPageAllSize(conditionString);
         return ResponseHelper.OK(list, pageAllSize);
     }
 
-    @GetMapping("/")
+    @GetMapping
     @ApiOperation(value = "获取指标清单")
     public ResponseEntity<ResultBean> gets() {
         // 编写指标清单
-        return ResponseHelper.OK();
+        return ResponseHelper.OK(metricsService.getKPIListing());
     }
 
     @PostMapping("/export")

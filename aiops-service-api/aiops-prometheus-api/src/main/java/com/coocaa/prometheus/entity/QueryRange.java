@@ -1,5 +1,6 @@
 package com.coocaa.prometheus.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import java.util.Date;
@@ -16,9 +17,11 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 public class QueryRange {
-    private String query;
+    @JsonIgnore
     private Date start;
+    @JsonIgnore
     private Date end;
+    private String query;
     private Integer span;
     private Integer step;
     private Map<String, String> conditions;

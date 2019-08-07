@@ -41,6 +41,18 @@
             <artifactId>aiops-detector-api</artifactId>
             <version>2.3.1</version>
         </dependency>
+        <!--通知服务API-->
+        <dependency>
+            <groupId>com.coocaa</groupId>
+            <artifactId>aiops-notice-api</artifactId>
+            <version>2.3.1</version>
+        </dependency>
+        <!--用户服务API-->
+        <dependency>
+            <groupId>com.coocaa</groupId>
+            <artifactId>aiops-user-api</artifactId>
+            <version>2.3.1</version>
+        </dependency>
         <!--CSV导出导入-->
         <dependency>
             <groupId>net.sourceforge.javacsv</groupId>

@@ -12,6 +12,7 @@ import com.coocaa.user.entity.User;
 import com.coocaa.user.input.TeamInputVo;
 import com.coocaa.user.mapper.TeamMapper;
 import com.coocaa.user.mapper.UserMapper;
+import com.coocaa.user.output.TeamOutputVo;
 import com.coocaa.user.service.TeamService;
 import lombok.AllArgsConstructor;
 import org.bouncycastle.jcajce.provider.symmetric.TEA;
@@ -36,7 +37,7 @@ public class TeamServiceImpl extends BaseServiceImpl<TeamMapper, Team> implement
 
     @Override
     @Transactional
-    public Team createTeam(TeamInputVo teamInputVo) {
+    public TeamOutputVo createTeam(TeamInputVo teamInputVo) {
         Team team = new Team();
         BeanUtils.copyProperties(teamInputVo, team);
         String userIdList = StringUtil.isEmpty(teamInputVo.getUserIdList()) ?
@@ -73,9 +74,13 @@ public class TeamServiceImpl extends BaseServiceImpl<TeamMapper, Team> implement
                 user.updateById();
             });
         }
-        List<User> users = userMapper.selectByTeamId(team.getId());
-        team.setUserList(users);
-        return team;
+        TeamOutputVo teamOutputVo = new TeamOutputVo();
+        BeanUtils.copyProperties(team, teamOutputVo);
+        List<User> users = userMapper.selectByTeamIdPage(team.getId(), 0, 5);
+        Integer size = userMapper.selectByTeamIdSize(team.getId());
+        teamOutputVo.setUserList(users);
+        teamOutputVo.setUserListTotal(size);
+        return teamOutputVo;
     }
 
     @Override

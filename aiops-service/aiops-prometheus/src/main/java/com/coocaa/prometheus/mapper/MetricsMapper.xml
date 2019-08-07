@@ -10,10 +10,6 @@
         <id column="id" property="id"/>
         <result column="metric_name" property="metricName"/>
         <result column="team_ids" property="teamIds"/>
-        <result column="query_range_json" property="queryRangeJson"/>
-        <result column="task_cron" property="taskCron"/>
-        <result column="task_id" property="taskId"/>
-        <result column="task_cron" property="taskCron"/>
         <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
     </resultMap>

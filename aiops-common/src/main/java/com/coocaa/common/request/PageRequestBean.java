@@ -14,9 +14,11 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PageRequestBean {
-    private Integer page;
-    private Integer count;
+    private Integer page = 0;
+    private Integer count = 5;
     private String conditionConnection;
+    private String orderBy;
+    private String sortType;
     private List<PageRequestItem> conditions;
 
     @Data

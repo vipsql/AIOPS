@@ -28,5 +28,5 @@ public interface ITaskClient {
     R<Task> createTask(@RequestBody TaskInputVo task, @RequestParam Integer type);
 
     @PostMapping(API_PREFIX + "/remove-task")
-    R<Boolean> removeTask(@RequestParam Integer taskId, @RequestParam Integer type);
+    R<Boolean> removeTask(@RequestParam Long taskId, @RequestParam Integer type);
 }

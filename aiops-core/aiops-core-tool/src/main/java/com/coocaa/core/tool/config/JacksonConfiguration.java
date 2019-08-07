@@ -33,7 +33,7 @@ import java.util.TimeZone;
 /**
  * Jackson配置类
  *
- * @author Chill
+ * @author dongyang_wu
  */
 @Configuration
 @ConditionalOnClass(ObjectMapper.class)

@@ -18,7 +18,7 @@ package com.coocaa.core.tool.constant;
 /**
  * 系统默认角色
  *
- * @author Chill
+ * @author dongyang_wu
  */
 public class RoleConstant {
 

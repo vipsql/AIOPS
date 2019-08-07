@@ -21,8 +21,15 @@ public class Metric {
     private String module;
     private String system;
     private String type;
-    private String device;
 
+
+    // http请求属性开始
+    private String request;
+    private String status;
+    //  http请求属性结束
+
+    // 磁盘容量属性开始
+    private String device;
     /**
      * 分区类型
      */
@@ -32,10 +39,10 @@ public class Metric {
      * 挂载点
      */
     private String mountpoint;
+    // 磁盘容量属性结束
 
-    /**
-     * http请求属性
-     */
-    private String request;
-    private String status;
+    // CPU使用率开始
+    private String mode;
+    private String cpu;
+    // CPU使用率结束
 }

@@ -33,7 +33,10 @@ public class ErrorLogPublisher {
                 logError.setFileName(element.getFileName());
                 logError.setLineNumber(element.getLineNumber());
             }
+        } else {
+            return;
         }
+
         LogAbstractUtil.addRequestInfoToLog(request, logError);
 
         Map<String, Object> event = new HashMap<>(16);

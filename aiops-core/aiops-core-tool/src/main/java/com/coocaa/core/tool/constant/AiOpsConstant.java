@@ -18,7 +18,7 @@ package com.coocaa.core.tool.constant;
 /**
  * 系统常量
  *
- * @author Chill
+ * @author dongyang_wu
  */
 public interface AiOpsConstant {
 

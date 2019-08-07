@@ -3,7 +3,6 @@ package com.coocaa.core.log.response;
 import org.springframework.http.ResponseEntity;
 
 /**
- * @program: intelligent_maintenance
  * @description: 统一返回方式
  * @author: dongyang_wu
  * @create: 2019-07-28 21:11

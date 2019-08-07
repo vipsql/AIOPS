@@ -24,7 +24,7 @@ import java.io.Serializable;
 /**
  * 实体类
  *
- * @author Chill
+ * @author dongyang_wu
  * @since 2018-10-12
  */
 @Data

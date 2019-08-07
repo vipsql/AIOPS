@@ -31,7 +31,7 @@ public class TaskClient implements ITaskClient {
 
     @Override
     @Transactional
-    public R<Boolean> removeTask(Integer taskId, Integer type) {
+    public R<Boolean> removeTask(Long taskId, Integer type) {
         boolean removeResult = taskManager.removeCronTask(taskId);
         int deleteResult = 0;
         // 0删除1停止

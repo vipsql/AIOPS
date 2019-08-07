@@ -1,17 +1,21 @@
 package com.coocaa.prometheus.controller;
 
-import com.coocaa.common.request.RequestBean;
-import com.coocaa.common.request.RequestUtil;
+import com.coocaa.common.request.*;
+import com.coocaa.core.log.annotation.ApiLog;
 import com.coocaa.core.log.exception.ApiException;
 import com.coocaa.core.log.exception.ApiResultEnum;
 import com.coocaa.core.log.response.ResponseHelper;
 import com.coocaa.core.log.response.ResultBean;
+import com.coocaa.core.tool.utils.SqlUtil;
 import com.coocaa.prometheus.entity.PrometheusConfig;
 import com.coocaa.prometheus.entity.Task;
 import com.coocaa.prometheus.input.*;
+import com.coocaa.prometheus.mapper.TaskMapper;
 import com.coocaa.prometheus.service.PromQLService;
 import com.coocaa.prometheus.service.TaskService;
 import com.coocaa.prometheus.util.FileJsonUtil;
+import com.coocaa.prometheus.util.TaskManager;
+import com.coocaa.prometheus.util.runnable.QueryMetricTask;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.AllArgsConstructor;
@@ -29,12 +33,32 @@ import java.util.concurrent.ExecutionException;
  */
 @RestController
 @RequestMapping("/prometheus")
-@Api(value = "对接Prometheus接口模块", tags = "Prometheus接口")
+@Api(description = "定时任务接口模块", tags = "定时任务接口")
 @AllArgsConstructor
 public class PrometheusController {
     private FileJsonUtil fileJsonUtil;
     private TaskService taskService;
     private PromQLService promQLService;
+    private TaskManager taskManager;
+    private TaskMapper taskMapper;
+
+    @PostMapping
+    @ApiOperation(value = "定时任务分页列表")
+    @ApiLog("定时任务分页列表")
+    public ResponseEntity<ResultBean> gets(@RequestBody PageRequestBean pageRequestBean) {
+        RequestUtil.setDefaultPageBean(pageRequestBean);
+        String conditionString = SqlUtil.getConditionString(pageRequestBean.getConditions(), pageRequestBean.getConditionConnection());
+        List<Task> list = taskMapper.getPageAll(pageRequestBean.getPage() * pageRequestBean.getCount(), pageRequestBean.getCount(), conditionString, pageRequestBean.getOrderBy(), pageRequestBean.getSortType());
+        Integer pageAllSize = taskMapper.getPageAllSize(conditionString);
+        return ResponseHelper.OK(list, pageAllSize);
+    }
+
+    @DeleteMapping("/delete")
+    @ApiOperation(value = "批量删除定时任务")
+    public ResponseEntity<ResultBean> delete(@RequestBody RequestBean requestBean) {
+        taskService.deletes(requestBean);
+        return ResponseHelper.OK();
+    }
 
     @PostMapping("/config/{type}/{mode}")
     @ApiOperation(value = "添加、修改或删除Prometheus需要监控的机器服务(instance不可重复)",
@@ -42,6 +66,7 @@ public class PrometheusController {
                     "targets:监控机器ip(例:39.108.106.167:8086);  \n" +
                     "type:0为设置指标路径为ip:port/metrics的服务-----1为设置ip:port/actuator/prometheus的服务;  \n" +
                     "mode为0新增或修改已存在的instance-----为1为删除指定instance的配置")
+    @ApiIgnore
     public ResponseEntity<ResultBean> create(@RequestBody List<PrometheusConfig> prometheusConfigs, @PathVariable Integer type, @PathVariable Integer mode) {
         if (RequestUtil.isInValidParameter(0, 1, type, mode))
             throw new ApiException(ApiResultEnum.FUNCTION_PARAMETER_SCOPE_ERROR);
@@ -102,7 +127,20 @@ public class PrometheusController {
         return ResponseHelper.OK(taskService.createQueryMetricsTask(task));
     }
 
-    @PostMapping("/stop/{type}")
+    @PostMapping("/restart")
+    @ApiOperation("重新启动定时任务")
+    public ResponseEntity<ResultBean> restartTask(@RequestBody RequestBean requestbean) {
+        requestbean.getItems().forEach(item -> {
+            List<Task> tasks = taskService.getBaseMapper().selectByMap(SqlUtil.map(item.getQuery(), item.getQueryString()).build());
+            tasks.forEach(task -> {
+                QueryMetricTask queryMetricTask = new QueryMetricTask(task, task.getType() == null ? 0 : task.getType());
+                taskManager.addCronTask(task.getId(), queryMetricTask, task.getTaskCron());
+            });
+        });
+        return ResponseHelper.OK();
+    }
+
+    @DeleteMapping("/stop/{type}")
     @ApiOperation(value = "删除、停止或禁用监控定时任务",
             notes = "query: 对应数据库表键值如id  \n" +
                     "queryString: 对应查询值如17  \n" +
@@ -130,7 +168,7 @@ public class PrometheusController {
         } else {
             date = new Date(getValuesInput.getDateTime() * 1000);
         }
-        return ResponseHelper.OK(promQLService.getRangeValues(date, getValuesInput.getMetricsName(), getValuesInput.getSpan(), getValuesInput.getStep(), getValuesInput.getConditions()));
+        return ResponseHelper.OK(promQLService.getRangeValues(null, date, getValuesInput.getMetricsName(), getValuesInput.getSpan(), getValuesInput.getStep(), getValuesInput.getConditions()));
     }
 
     @GetMapping("/targets")

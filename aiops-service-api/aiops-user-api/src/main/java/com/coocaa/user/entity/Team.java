@@ -7,7 +7,6 @@ import lombok.*;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.List;
 
 /**
  * @description: Team
@@ -28,8 +27,6 @@ public class Team extends Model<Team> {
     @TableLogic
     @JsonIgnore
     private Integer logic;
-    @TableField(exist = false)
-    private List<User> userList;
     @TableField(fill = FieldFill.INSERT)
     private Date createTime;
     @TableField(fill = FieldFill.INSERT_UPDATE)
@@ -37,6 +34,8 @@ public class Team extends Model<Team> {
 
     //    @TableField(exist = false)
 //    private User adminUser;
+//    @TableField(exist = false)
+//    private List<User> userList;
     @Override
     protected Serializable pkVal() {
         return this.id;

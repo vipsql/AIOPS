@@ -18,7 +18,6 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 import java.util.*;
 
 /**
- * @program: intelligent_maintenance
  * @description: swagger配置
  * @author: dongyang_wu
  * @create: 2019-07-28 21:11

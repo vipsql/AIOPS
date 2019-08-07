@@ -36,4 +36,17 @@ public class Constant {
         List<String> columns = Arrays.asList("viewName", "viewId", "attrName", "attrId", "source", "trainOrTest", "positiveOrNegative", "window", "dataC", "dataB", "dataA", "dateTime");
         List<String> columnCns = Arrays.asList("指标集名称", "指标集id", "指标名称", "指标id", "数据来源", "训练集/测试集", "正样本/负样本", "样本窗口", "dataC", "dataB", "dataA", "数据时间戳");
     }
+
+    public interface MetisException {
+        Integer RET = 0;
+        Double P = 0.15;
+    }
+
+    // 0未处理1已修正2已恢复3已修复
+    public interface MetisExceptionStatus {
+        Integer UNHANDLED = 0;// 未处理
+        Integer CORRECTED = 1;// 已修正
+        Integer RECOVERY = 2;// 已恢复
+        Integer HANDLED = 3;// 已修复
+    }
 }

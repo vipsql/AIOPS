@@ -8,5 +8,5 @@ package com.coocaa.prometheus.common;
  */
 public interface PromBaseLables {
 
-    String baseLables = "type system module job hostname";
+    String baseLables = "type system module job hostname __name__ prog";
 }

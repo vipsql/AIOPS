@@ -12,7 +12,6 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * @program: intelligent_maintenance
  * @description: 基础实体类
  * @author: dongyang_wu
  * @create: 2019-07-28 22:09

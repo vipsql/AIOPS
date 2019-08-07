@@ -14,10 +14,10 @@ import com.coocaa.detector.entity.*;
 import com.coocaa.detector.feign.IDetectorClient;
 import com.coocaa.prometheus.common.PromBaseLables;
 import com.coocaa.prometheus.common.PromNorm;
+import com.coocaa.prometheus.dto.MetisDto;
 import com.coocaa.prometheus.entity.*;
 import com.coocaa.prometheus.input.QueryMetricProperty;
 import com.coocaa.prometheus.output.MetricsCsvVo;
-import com.coocaa.prometheus.output.httpRequestToTal.MatrixResult;
 import com.coocaa.prometheus.service.PromQLService;
 import com.coocaa.prometheus.util.PromQLUtil;
 import com.google.common.collect.Sets;
@@ -38,6 +38,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 /**
  * @Auther: wyx
@@ -98,7 +99,7 @@ public class PromQLServiceImpl implements PromQLService {
             queryMetricProperty.setMetricsName(PromNorm.NODE_MEMORY_CACHED_BYTES);
             realQuery = getRealHttpTotalQuery(queryMetricProperty);
         }
-        List<MatrixData> realResult = detectByMetis(new Date(), realQuery, null);
+        Map<String, MatrixData> realResult = detectByMetis(new Date(), realQuery, null, null);
         return ResponseHelper.OK(realResult);
     }
 
@@ -134,12 +135,12 @@ public class PromQLServiceImpl implements PromQLService {
     }
 
     @Override
-    public List<MatrixData> getRangeValues(Date date, String metricName, Integer span, Integer step, Map<String, String> conditions) throws ExecutionException, InterruptedException {
+    public Map<String, MatrixData> getRangeValues(MetisDto metisDto, Date date, String metricName, Integer span, Integer step, Map<String, String> conditions) throws ExecutionException, InterruptedException {
         String realQuery = PromQLUtil.getQueryConditionStr(metricName, conditions);
         Date begin = DateUtil.setSeconds(date, -span);
         List<MatrixData> matrixData = rangeQuery(realQuery, begin, date, step);
-        List<MatrixData> realResult = detectByMetis(date, realQuery, matrixData);
-        return realResult;
+        Map<String, MatrixData> realResultMap = matrixData.stream().collect(Collectors.toMap(MatrixData::specialKey, a -> a, (k1, k2) -> k1));
+        return detectByMetis(date, realQuery, realResultMap, metisDto);
     }
 
     @Override
@@ -181,6 +182,7 @@ public class PromQLServiceImpl implements PromQLService {
 
     private JSONArray sendRangQuery(String query, Date start, Date end, Integer step) {
         String url = serverUrl + "query_range?query=" + query + "&start=" + parseTime(start) + "&end=" + parseTime(end) + "&step=" + step;
+        System.out.println(url);
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
         URI uri = builder.build().encode().toUri();
         ResponseEntity<String> forEntity = restTemplate.getForEntity(uri, String.class);
@@ -227,49 +229,64 @@ public class PromQLServiceImpl implements PromQLService {
         return resultLists;
     }
 
-    private List<MatrixData> detectByMetis(Date now, String realQuery, List<MatrixData> matrixDatas) throws ExecutionException, InterruptedException {
+    private Map<String, MatrixData> detectByMetis(Date now, String realQuery, Map<String, MatrixData> matrixDataMap, MetisDto metisDto) throws ExecutionException, InterruptedException {
         System.out.println("-----------当前时刻");
         Date date = DateUtil.setHours(now, -3);
         CompletableFuture<List<MatrixData>> metisDataAsyncA = getMetisDataFirst(realQuery, date, now);
         System.out.println("------------一天前");
         Date yesterday = DateUtil.setDays(now, -1);
-        CompletableFuture<List<String>> metisDataAsyncB = getMetisData(realQuery, DateUtil.setHours(yesterday, -3), DateUtil.setHours(yesterday, 3));
+        CompletableFuture<List<MatrixData>> metisDataAsyncB = getMetisDataFirst(realQuery, DateUtil.setHours(yesterday, -3), DateUtil.setHours(yesterday, 3));
         System.out.println("------------一周前");
         Date weekEarlier = DateUtil.setWeeks(now, -1);
-        CompletableFuture<List<String>> metisDataAsyncC = getMetisData(realQuery, DateUtil.setHours(weekEarlier, -3), DateUtil.setHours(weekEarlier, 3));
+        CompletableFuture<List<MatrixData>> metisDataAsyncC = getMetisDataFirst(realQuery, DateUtil.setHours(weekEarlier, -3), DateUtil.setHours(weekEarlier, 3));
         // 等待3者执行完成 多线程异步执行
         CompletableFuture.allOf(metisDataAsyncA, metisDataAsyncB, metisDataAsyncC).join();
-        List<MatrixData> metisDataA = metisDataAsyncA.get();
-        List<String> metisDataB = metisDataAsyncB.get();
-        List<String> metisDataC = metisDataAsyncC.get();
+        Map<String, MatrixData> metisDataA = metisDataAsyncA.get().stream().collect(Collectors.toMap(MatrixData::specialKey, a -> a, (k1, k2) -> k1));
+        Map<String, MatrixData> metisDataB = metisDataAsyncB.get().stream().collect(Collectors.toMap(MatrixData::specialKey, a -> a, (k1, k2) -> k1));
+        Map<String, MatrixData> metisDataC = metisDataAsyncC.get().stream().collect(Collectors.toMap(MatrixData::specialKey, a -> a, (k1, k2) -> k1));
+        System.out.println(matrixDataMap.size() + " " + metisDataA.size() + " " + metisDataB.size() + " " + metisDataC.size());
         System.out.println("执行完毕");
-        if (CollectionUtils.isEmpty(matrixDatas))
-            matrixDatas = metisDataA;
-        for (int i = 0; i < metisDataA.size(); i++) {
-            MatrixData matrixData = metisDataA.get(i);
-            MatrixResult matrixResult = new MatrixResult();
-            matrixResult.setMetric(matrixData.getMetric());
-            Detector detector = Detector.builder()
-                    .attrName("http接口请求数")
-                    .window(180)
-                    .viewId("2012")
-                    .viewName("登陆功能")
-                    .attrId("19201")
-                    .dataA(matrixData.getMetisData())
-                    .dataB(metisDataB.get(i))
-                    .dataC(metisDataC.get(i))
-                    .taskId("1564996712706_features")
-                    .time(metisDateFormat.format(now)).build();
-            R<DetectorResult> rpcResult = detectorFeign.timeSeriesDetector(detector);
-            String instance = matrixData.getMetric().getInstance();
-            String resultInstance = matrixDatas.get(i).getMetric().getInstance();
-            if (rpcResult.isSuccess() && instance.equals(resultInstance)) {
-                matrixDatas.get(i).setDetectResult(rpcResult.getData().getData());
-            } else {
-                System.out.println(instance + "不匹配" + resultInstance);
-            }
+        if (CollectionUtils.isEmpty(matrixDataMap))
+            matrixDataMap = metisDataA;
+        String viewName = "指标集名";
+        String attrName = "指标名";
+        String modelName = "1565079045604";
+        String viewId = "2012";
+        String attrId = "19201";
+        if (metisDto != null) {
+            viewId = metisDto.getViewId() + "";
+            viewName = metisDto.getViewName();
+            attrId = metisDto.getAttrId() + "";
+            attrName = metisDto.getAttrName();
+            modelName = metisDto.getModelName();
         }
-        return matrixDatas;
+        return getRealMetisResult(now, viewId, attrId, viewName, attrName, modelName, matrixDataMap, metisDataA, metisDataB, metisDataC);
+    }
+
+    private Map<String, MatrixData> getRealMetisResult(Date now, String viewId, String attrId, String viewName, String attrName, String modelName, Map<String, MatrixData> matrixDataMap, Map<String, MatrixData> metisDataA, Map<String, MatrixData> metisDataB, Map<String, MatrixData> metisDataC) {
+        matrixDataMap.forEach((key, value) -> {
+            MatrixData matrixDataA = metisDataA.get(key);
+            MatrixData matrixDataB = metisDataB.get(key);
+            MatrixData matrixDataC = metisDataC.get(key);
+            if (matrixDataA != null && matrixDataB != null & matrixDataC != null) {
+                Detector detector = Detector.builder()
+                        .attrName(attrName)
+                        .window(180)
+                        .viewId(viewId)
+                        .viewName(viewName)
+                        .attrId(attrId)
+                        .dataA(matrixDataA.getMetisData())
+                        .dataB(matrixDataB.getMetisData())
+                        .dataC(matrixDataC.getMetisData())
+                        .taskId(modelName)
+                        .time(metisDateFormat.format(now)).build();
+                R<DetectorResult> rpcResult = detectorFeign.timeSeriesDetector(detector);
+                if (rpcResult.isSuccess()) {
+                    matrixDataMap.get(key).setDetectResult(rpcResult.getData().getData());
+                }
+            }
+        });
+        return matrixDataMap;
     }
 
     private String getRealHttpTotalQuery(QueryMetricProperty queryMetricProperty) {

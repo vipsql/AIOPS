@@ -32,7 +32,6 @@ public class FeignRequestHeaderInterceptor implements RequestInterceptor {
                     String name = headerNames.nextElement();
                     String value = request.getHeader(name);
                     if (TokenConstant.HEADER.equalsIgnoreCase(name)) {
-                        System.out.println("传递token");
                         hasAuthToken = true;
                         requestTemplate.header(name, value);
                     }
@@ -43,7 +42,6 @@ public class FeignRequestHeaderInterceptor implements RequestInterceptor {
             Map<String, String> param = new HashMap<>(16);
             param.put(TokenConstant.USER_NAME, "Feign内部调用");
             String jwt = SecureUtil.createJWT(param, "admin", "admin", true, AppConstant.FEIGN_TOKEN_EXPIRE_TIME);
-            System.out.println("Feign内部调用");
             requestTemplate.header(TokenConstant.HEADER, jwt);
         }
     }

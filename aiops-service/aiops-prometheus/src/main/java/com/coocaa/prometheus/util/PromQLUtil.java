@@ -20,12 +20,14 @@ public class PromQLUtil {
     }
 
     public static String getQueryConditionStr(String metricsName, Map<String, String> conditions) {
+        if (conditions == null)
+            return metricsName.replace("%s", "");
         List<String> conditionQuery = new ArrayList<>();
         conditions.forEach((key, value) -> conditionQuery.add(getQueryConditionStr(key, value)));
         if (!CollectionUtils.isEmpty(conditionQuery)) {
             StringBuffer condition = new StringBuffer();
             condition.append("{").append(StringUtils.collectionToDelimitedString(conditionQuery, ",")).append("}");
-            return String.format(metricsName, condition.toString());
+            return metricsName.replaceAll("%s", condition.toString());
         }
         return metricsName.replace("%s", "");
     }

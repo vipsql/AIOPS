@@ -19,7 +19,7 @@ public interface MetricsMapper extends BaseMapper<Metrics> {
 
     // 分页获取数据开始
     @Select(value = GET_PAGE_ALL)
-    List<Metrics> getPageAll(Integer page, Integer count, String conditions);
+    List<Metrics> getPageAll(Integer page, Integer count, String conditions, String orderBy, String sortType);
 
     @Select(value = GET_PAGE_ALL_SIZE)
     Integer getPageAllSize(@Param("conditions") String conditions);

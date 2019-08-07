@@ -10,6 +10,7 @@ import com.coocaa.core.log.exception.ApiResultEnum;
 import com.coocaa.core.mybatis.base.BaseServiceImpl;
 import com.coocaa.core.tool.utils.DateUtil;
 import com.coocaa.core.tool.utils.SqlUtil;
+import com.coocaa.prometheus.constant.KPIListing;
 import com.coocaa.prometheus.entity.*;
 import com.coocaa.prometheus.input.*;
 import com.coocaa.prometheus.mapper.MetricsMapper;
@@ -45,32 +46,28 @@ public class MetricsServiceImpl extends BaseServiceImpl<MetricsMapper, Metrics> 
     public Metrics createMetrics(Integer type, MetricsInputVo metricsInputVo) {
         Metrics metrics = new Metrics();
         BeanUtils.copyProperties(metricsInputVo, metrics);
-        metrics.setQueryRangeJson(JSON.toJSONString(metricsInputVo.getQueryRange()));
+        metrics.insertOrUpdate();
         if (Constant.NumberType.ONE_PROPERTY.equals(type)) {
             TaskInputVo taskInputVo = TaskInputVo.builder()
+                    .id(metricsInputVo.getTaskId())
                     .type(Constant.NumberType.ZERO_PROPERTY)
                     .queryRange(metricsInputVo.getQueryRange())
                     .taskCron(metricsInputVo.getTaskCron())
                     .taskDescription("定期获取对应指标数据")
-                    .taskName(metricsInputVo.getMetricName())
-                    .queryMetric(metricsInputVo.getMetricName())
-                    .taskId(metricsInputVo.getTaskId())
+                    .taskName(metricsInputVo.getTaskName())
+                    .metricsId(metrics.getId())
+                    .modelName(metricsInputVo.getModelName())
                     .build();
-            Task queryMetricsTask = taskService.createQueryMetricsTask(taskInputVo);
-            metrics.setTaskId(queryMetricsTask.getTaskId());
+            taskService.createQueryMetricsTask(taskInputVo);
         }
-        metrics.insertOrUpdate();
         return metrics;
     }
 
     @Override
-    @Transactional
-    public boolean deleteMetrics(Long id, Integer type) {
-        Metrics metrics = metricsMapper.selectById(id);
-        RequestBean requestBean = RequestBean.builder().items(Arrays.asList(RequestBean.RequestItem.builder().query(TableConstant.TASK.TASK_ID).queryString(metrics.getTaskId() + "").build())).build();
-        taskService.removeQueryMetricsTask(requestBean, type);
-        return metrics.deleteById();
+    public Map<String, String> getKPIListing() {
+        return KPIListing.KPI;
     }
+
 
     /**
      * 批量删除
@@ -84,7 +81,14 @@ public class MetricsServiceImpl extends BaseServiceImpl<MetricsMapper, Metrics> 
         requestBean.getItems().forEach(request -> {
             List<Metrics> metrics = metricsMapper.selectByMap(SqlUtil.map(request.getQuery(), request.getQueryString()).build());
             metrics.forEach(metric -> {
-                RequestBean taskDeleteRequestBean = RequestBean.builder().items(Arrays.asList(RequestBean.RequestItem.builder().query(TableConstant.TASK.TASK_ID).queryString(metric.getTaskId() + "").build())).build();
+                List<Task> tasks = taskService.getBaseMapper().selectByMap(SqlUtil.map(TableConstant.TASK.METRICS_ID, metric.getId()).build());
+                RequestBean taskDeleteRequestBean = new RequestBean();
+                List<RequestBean.RequestItem> itemList = new ArrayList<>();
+                tasks.forEach(task -> {
+                    RequestBean.RequestItem item = RequestBean.RequestItem.builder().query(TableConstant.ID).queryString(task.getId() + "").build();
+                    itemList.add(item);
+                });
+                taskDeleteRequestBean.setItems(itemList);
                 taskService.removeQueryMetricsTask(taskDeleteRequestBean, type);
                 metric.deleteById();
             });
@@ -98,16 +102,20 @@ public class MetricsServiceImpl extends BaseServiceImpl<MetricsMapper, Metrics> 
         Integer span = metisCsvInputVo.getSpan();
         if (begin.compareTo(end) > 0 || span < 0)
             throw new ApiException(ApiResultEnum.FUNCTION_PARAMETER_SCOPE_ERROR);
-        Metrics metrics = metricsMapper.selectById(metisCsvInputVo.getMetricsId());
-        QueryRange queryRange = JSON.parseObject(metrics.getQueryRangeJson(), QueryRange.class);
-        String realQuery = PromQLUtil.getQueryConditionStr(queryRange.getQuery(), queryRange.getConditions());
+        List<Task> tasks = taskService.getBaseMapper().selectByMap(SqlUtil.map(TableConstant.TASK.METRICS_ID, metisCsvInputVo.getMetricsId()).build());
         List<MetricsCsvVo> allResultList = new ArrayList<>();
-        while (true) {
-            List<MetricsCsvVo> metisCsvVo = promQLService.createMetisCsvVo(begin, realQuery, 1857889L, 20158L);
-            allResultList.addAll(metisCsvVo);
-            begin = DateUtil.setMinutes(begin, span);
-            if (begin.compareTo(end) > 0)
-                break;
+        // 遍历指标下的所有定时任务
+        for (Task task : tasks) {
+            begin = metisCsvInputVo.getBegin();
+            QueryRange queryRange = JSON.parseObject(task.getArgs(), QueryRange.class);
+            String realQuery = PromQLUtil.getQueryConditionStr(queryRange.getQuery(), queryRange.getConditions());
+            while (true) {
+                List<MetricsCsvVo> metisCsvVo = promQLService.createMetisCsvVo(begin, realQuery, 1857889L, 20158L);
+                allResultList.addAll(metisCsvVo);
+                begin = DateUtil.setMinutes(begin, span);
+                if (begin.compareTo(end) > 0)
+                    break;
+            }
         }
         return allResultList;
     }
@@ -118,7 +126,9 @@ public class MetricsServiceImpl extends BaseServiceImpl<MetricsMapper, Metrics> 
         //RestTemplate带参传的时候要用HttpEntity<?>对象传递
         Map<String, Object> map = new HashMap<>();
         map.put("metrics", metricsCsvVos);
-        String apiResult = restTemplate.postForObject("http://123.56.7.250:8080/ImportSample", JSON.toJSONString(map), String.class);
+        String s = JSON.toJSONString(map);
+        System.out.println(s);
+        String apiResult = restTemplate.postForObject("http://123.56.7.250:8080/ImportSample", s, String.class);
         JSONObject data = JSON.parseObject(apiResult).getJSONObject("data");
         return data;
     }

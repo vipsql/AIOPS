@@ -1,7 +1,6 @@
 package com.coocaa.common.constant;
 
 /**
- * @program: intelligent_maintenance
  * @description: 数据表常量
  * @author: dongyang_wu
  * @create: 2019-07-31 09:20
@@ -15,6 +14,7 @@ public interface TableConstant {
             "<if test='conditions!=null '>" +
             "and ${conditions} " +
             "</if>" +
+            "ORDER BY ${orderBy} ${sortType} " +
             "limit #{page},#{count}" +
             "</script>";
 
@@ -42,6 +42,7 @@ public interface TableConstant {
         String TABLE_USER = "user";
         String TABLE_TEAM = "team";
         String TABLE_METRICS = "metrics";
+        String TABLE_METIS_EXCEPTION = "metis_exception";
     }
 
     interface USER {
@@ -51,6 +52,7 @@ public interface TableConstant {
 
     interface TASK {
         String TASK_ID = "task_id";
+        String METRICS_ID = "metrics_id";
     }
 
     interface TEAM {
