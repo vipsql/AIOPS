@@ -49,6 +49,7 @@ public interface TableConstant {
     interface USER {
         String MAIL = "mail";
         String TEAM_IDS = "team_ids";
+        String ADMIN_USER_ID = "admin_user_id";
     }
 
     interface TASK {

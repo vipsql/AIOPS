@@ -3,18 +3,11 @@ package com.coocaa.user.controller;
 import com.coocaa.common.request.*;
 import com.coocaa.core.log.response.ResponseHelper;
 import com.coocaa.core.log.response.ResultBean;
-import com.coocaa.core.tool.utils.SqlUtil;
-import com.coocaa.user.entity.Team;
-import com.coocaa.user.entity.User;
 import com.coocaa.user.input.TeamInputVo;
-import com.coocaa.user.mapper.TeamMapper;
-import com.coocaa.user.mapper.UserMapper;
-import com.coocaa.user.output.TeamOutputVo;
 import com.coocaa.user.service.TeamService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.AllArgsConstructor;
-import org.springframework.beans.BeanUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,22 +24,6 @@ import java.util.*;
 @AllArgsConstructor
 public class TeamController {
     private TeamService teamService;
-    private TeamMapper teamMapper;
-    private UserMapper userMapper;
-
-    @PostMapping("/create")
-    @ApiOperation(value = "新建或修改",
-            notes = "例:{\n" +
-                    "  \"id\":11,\n" +
-                    "  \"name\": \"测试Team3\",\n" +
-                    "  \"adminUserId\": 1,\n" +
-                    "  \"userIdList\": \"21,22\"\n" +
-                    "}  \n" +
-                    "userIdList以,隔开  \n" +
-                    "可以通过改变userIdList改变小组成员")
-    public ResponseEntity<ResultBean> create(@RequestBody TeamInputVo teamInputVo) {
-        return ResponseHelper.OK(teamService.createTeam(teamInputVo));
-    }
 
     @PostMapping
     @ApiOperation(value = "分页获取team列表,响应code为总数",
@@ -74,21 +51,21 @@ public class TeamController {
                     "  ]\n" +
                     "}  \n")
     public ResponseEntity<ResultBean> gets(@RequestBody PageRequestBean pageRequestBean) {
-        RequestUtil.setDefaultPageBean(pageRequestBean);
-        String conditionString = SqlUtil.getConditionString(pageRequestBean.getConditions(), pageRequestBean.getConditionConnection());
-        List<Team> list = teamMapper.getPageAll(pageRequestBean.getPage() * pageRequestBean.getCount(), pageRequestBean.getCount(), conditionString, pageRequestBean.getOrderBy(), pageRequestBean.getSortType());
-        List<TeamOutputVo> resultList = new ArrayList<>();
-        list.forEach(team -> {
-            TeamOutputVo teamOutputVo = new TeamOutputVo();
-            BeanUtils.copyProperties(team, teamOutputVo);
-            List<User> users = userMapper.selectByTeamIdPage(team.getId(), 0, 5);
-            Integer size = userMapper.selectByTeamIdSize(team.getId());
-            teamOutputVo.setUserList(users);
-            teamOutputVo.setUserListTotal(size);
-            resultList.add(teamOutputVo);
-        });
-        Integer pageAllSize = teamMapper.getPageAllSize(conditionString);
-        return ResponseHelper.OK(resultList, pageAllSize);
+        return teamService.listByPage(pageRequestBean);
+    }
+
+    @PostMapping("/create")
+    @ApiOperation(value = "新建或修改",
+            notes = "例:{\n" +
+                    "  \"id\":11,\n" +
+                    "  \"name\": \"测试Team3\",\n" +
+                    "  \"adminUserId\": 1,\n" +
+                    "  \"userIdList\": \"21,22\"\n" +
+                    "}  \n" +
+                    "userIdList以,隔开  \n" +
+                    "可以通过改变userIdList改变小组成员")
+    public ResponseEntity<ResultBean> create(@RequestBody TeamInputVo teamInputVo) {
+        return ResponseHelper.OK(teamService.createTeam(teamInputVo));
     }
 
     @PostMapping("/delete")

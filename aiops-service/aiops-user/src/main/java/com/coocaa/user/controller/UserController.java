@@ -4,7 +4,6 @@ import com.coocaa.common.request.*;
 import com.coocaa.core.tool.utils.SqlUtil;
 import com.coocaa.user.entity.User;
 import com.coocaa.user.input.UserInputVo;
-import com.coocaa.user.mapper.TeamMapper;
 import com.coocaa.user.mapper.UserMapper;
 import com.coocaa.user.service.UserService;
 import com.coocaa.core.log.response.ResponseHelper;
@@ -29,7 +28,6 @@ import java.util.List;
 public class UserController {
     private UserService userService;
     private UserMapper userMapper;
-    private TeamMapper teamMapper;
 
     @PostMapping("/attr")
     @ApiOperation(value = "获取指定属性的用户信息", notes = "id")

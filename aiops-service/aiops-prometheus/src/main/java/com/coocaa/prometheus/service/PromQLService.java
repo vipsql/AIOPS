@@ -1,6 +1,7 @@
 package com.coocaa.prometheus.service;
 
 
+import com.coocaa.common.request.PageRequestBean;
 import com.coocaa.core.log.response.ResultBean;
 import com.coocaa.prometheus.dto.MetisDto;
 import com.coocaa.prometheus.entity.*;
@@ -17,8 +18,12 @@ import java.util.concurrent.ExecutionException;
  * @Description: 与 Prometheus 交互服务
  */
 public interface PromQLService {
-
-    ResponseEntity<ResultBean> queryMetrics(Task task, Integer type);
+    /**
+     * 分页
+     * @param pageRequestBean
+     * @return
+     */
+    ResponseEntity<ResultBean> listByPage(PageRequestBean pageRequestBean);
 
     /**
      * 上传到metis检测异常
@@ -82,7 +87,7 @@ public interface PromQLService {
     /**
      * 生成Metis训练集CSV文件
      */
-    List<MetricsCsvVo> createMetisCsvVo(Date now, String realQuery) throws ExecutionException, InterruptedException;
+    List<MetricsCsvVo> createMetisCsvVo(Date now, String realQuery, MetisDto metisDto) throws ExecutionException, InterruptedException;
 
     /**
      * 范围查询map结果集
@@ -96,5 +101,6 @@ public interface PromQLService {
 
     List<Map<String, Object>> rangeQueryToList(String query, Date start, Date end, Integer step);
 
+    ResponseEntity<ResultBean> queryMetrics(Task task, Integer type);
 
 }

@@ -40,6 +40,11 @@ public class UserClient implements IUserClient {
     }
 
     @Override
+    public R<User> userById(Long id) {
+        return R.data(userService.getBaseMapper().selectById(id));
+    }
+
+    @Override
     @PostMapping(API_PREFIX + "/insert")
     public R<Integer> insert(User user) {
         int flag = 0;

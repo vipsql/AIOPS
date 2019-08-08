@@ -24,7 +24,7 @@ public class RequestUtil {
         if (pageRequestBean.getPage() == null) {
             pageRequestBean.setPage(0);
         }
-        if (pageRequestBean.getCount() == null) {
+        if (pageRequestBean.getCount() == null || pageRequestBean.getCount() == 0) {
             pageRequestBean.setCount(5);
         }
         if (pageRequestBean.getOrderBy() == null) {

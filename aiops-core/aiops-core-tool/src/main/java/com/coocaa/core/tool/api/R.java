@@ -142,8 +142,12 @@ public class R<T> implements Serializable {
         return new R<>(ResultCode.SUCCESS, msg);
     }
 
+    public static <T> R<T> success(String msg, T data) {
+        return new R<>(ResultCode.SUCCESS, data, msg);
+    }
+
     public static <T> R<T> success() {
-        return new R<T>(0, (T) "操作成功", "success");
+        return new R<T>(ResultCode.SUCCESS.code, (T) "操作成功", "success");
     }
 
     /**
@@ -199,6 +203,10 @@ public class R<T> implements Serializable {
      */
     public static <T> R<T> fail(int code, String msg) {
         return new R<>(code, null, msg);
+    }
+
+    public static <T> R<T> fail(int code, String msg, T data) {
+        return new R<>(code, data, msg);
     }
 
     /**

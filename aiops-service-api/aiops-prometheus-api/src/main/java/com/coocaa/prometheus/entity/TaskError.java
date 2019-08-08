@@ -3,7 +3,6 @@ package com.coocaa.prometheus.entity;
 import lombok.*;
 
 /**
- * @program: intelligent_maintenance
  * @description: 定时任务出错信息
  * @author: dongyang_wu
  * @create: 2019-08-01 16:21

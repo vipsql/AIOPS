@@ -1,6 +1,8 @@
 package com.coocaa.prometheus.input;
 
 import com.coocaa.prometheus.entity.QueryRange;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.*;
 
 import javax.validation.constraints.NotEmpty;
@@ -14,39 +16,25 @@ import javax.validation.constraints.NotEmpty;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ApiModel
 public class TaskInputVo {
-    /**
-     * 任务 ID
-     */
+    @ApiModelProperty("任务 ID")
     private Long id;
-
-    /**
-     * 任务名
-     */
     @NotEmpty(message = "任务名不能为空")
+    @ApiModelProperty("任务名")
     private String taskName;
-    /**
-     * 任务描述
-     */
     @NotEmpty(message = "任务描述不能为空")
+    @ApiModelProperty("任务描述")
     private String taskDescription;
-
-    /**
-     * 计划任务定时
-     */
     @NotEmpty(message = "定时计划不能为空")
+    @ApiModelProperty("计划任务定时")
     private String taskCron;
-    /**
-     * 模型名
-     */
+    @ApiModelProperty("定时任务选用模型名")
     private String modelName;
-    /**
-     * 定时任务所属指标
-     */
+    @ApiModelProperty("定时任务所属指标集")
     private Long metricsId;
-    /**
-     * 所属Team
-     */
+    @ApiModelProperty("定时任务所属Team")
     private String teamIds;
+    @ApiModelProperty("定时任务参数--其中span主要用异常展示")
     private QueryRange queryRange;
 }

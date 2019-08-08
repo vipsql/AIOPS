@@ -18,6 +18,7 @@ public interface TokenConstant {
 	String ACCOUNT = "account";
 	String USER_ID = "user_id";
 	String ROLE_ID = "role_id";
+	String TEAM_IDS = "team_ids";
 	String USER_NAME = "user_name";
 	String ROLE_NAME = "role_name";
 	String TENANT_CODE = "tenant_code";

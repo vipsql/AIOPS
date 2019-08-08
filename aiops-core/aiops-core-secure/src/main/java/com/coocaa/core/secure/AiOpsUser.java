@@ -40,5 +40,9 @@ public class AiOpsUser {
      */
     @ApiModelProperty(hidden = true)
     private String roleName;
-
+    /**
+     * 用户所属Team
+     */
+    @ApiModelProperty(hidden = true)
+    private String teamIds;
 }

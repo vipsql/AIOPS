@@ -1,5 +1,7 @@
 package com.coocaa.prometheus.input;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.*;
 
 /**
@@ -11,9 +13,12 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@ApiModel
 public class MetisExceptionInputVo {
     private Long id;
+    @ApiModelProperty("0未处理1已修正2已恢复3已修复")
     private Integer status;
+    @ApiModelProperty("用户输入的理由")
     private String reason;
 
 }

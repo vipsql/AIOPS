@@ -53,7 +53,7 @@ public class QueryMetricTask implements Runnable {
                     .createTime(new Date())
                     .matrixDataJson(JSON.toJSONString(errorItems))
                     .status(Constant.NumberType.ZERO_PROPERTY)
-                    .metricsId(task.getMetricsId())
+                    .taskId(task.getId())
                     .build();
             metisException.insertOrUpdate();
             TaskManager.getAsyncServiceTask().sendDetectResult(errorItems, task.getTeamIds(), task.getTaskName());

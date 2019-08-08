@@ -36,6 +36,9 @@ public interface IUserClient {
     @GetMapping(API_PREFIX + "/userByMail")
     R<User> userByMail(@RequestParam("mail") String mail);
 
+    @GetMapping(API_PREFIX + "/userById")
+    R<User> userById(@RequestParam("id") Long id);
+
     @PostMapping(API_PREFIX + "/insert")
     R<Integer> insert(@RequestBody User user);
 

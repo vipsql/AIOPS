@@ -110,6 +110,7 @@ public class AuthServiceImpl implements AuthService {
         Map<String, String> param = new HashMap<>(16);
         param.put(TokenConstant.USER_ID, Func.toStr(user.getId()));
         param.put(TokenConstant.ROLE_ID, Func.toStr(1));
+        param.put(TokenConstant.TEAM_IDS, user.getTeamIds());
         param.put(TokenConstant.ACCOUNT, user.getAccount());
         param.put(TokenConstant.USER_NAME, user.getName());
         param.put(TokenConstant.ROLE_NAME, "admin");

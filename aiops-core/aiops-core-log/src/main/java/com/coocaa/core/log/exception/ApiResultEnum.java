@@ -26,6 +26,8 @@ public enum ApiResultEnum {
     USER_COPY_USERVO_ERROR(20011, "user对象copy为uservo长度为0"),
     WX_USER_OPENID_GET_ERROR(20012, "获取openid或session_key为空"),
     WX_USER_OPENID_NOT_EXIST(20013, "此openid对应的用户不存在"),
+    USER_NOT_USER_TEAM_ADMIN(20014, "当前用户非正在修改的用户的Team管理员"),
+    USER_NOT_TEAM_ADMIN(20015, "当前用户非正在修改的Team的管理员"),
     ORDER_NOT_EXIST(30000, "用户未授权"),
     ACTIVATE_EXPIRE(30001, "激活邮件过期"),
     VERTIFY_EXPIRE(30002, "登录验证码过期"),

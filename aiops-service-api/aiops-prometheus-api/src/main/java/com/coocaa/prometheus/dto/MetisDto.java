@@ -32,4 +32,12 @@ public class MetisDto {
      * 模型名
      */
     private String modelName;
+    /**
+     * 样本来源
+     */
+    private String source;
+    /**
+     * 测试还是训练
+     */
+    private String trainOrTest;
 }

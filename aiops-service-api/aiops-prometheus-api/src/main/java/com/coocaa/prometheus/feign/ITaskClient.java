@@ -8,7 +8,6 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * @program: intelligent_maintenance
  * @description: 远程定时任务调用Feign
  * @author: dongyang_wu
  * @create: 2019-08-01 13:22

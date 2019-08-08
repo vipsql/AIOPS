@@ -1,16 +1,15 @@
 package com.coocaa.prometheus.controller;
 
-import com.alibaba.fastjson.JSONObject;
 import com.coocaa.common.constant.Constant;
 import com.coocaa.common.request.*;
 import com.coocaa.core.log.annotation.ApiLog;
 import com.coocaa.core.log.response.ResponseHelper;
 import com.coocaa.core.log.response.ResultBean;
-import com.coocaa.core.tool.utils.SqlUtil;
-import com.coocaa.prometheus.entity.Task;
+import com.coocaa.detector.feign.IDetectorClient;
 import com.coocaa.prometheus.input.MetisCsvInputVo;
 import com.coocaa.prometheus.input.TaskInputVo;
 import com.coocaa.prometheus.mapper.TaskMapper;
+import com.coocaa.prometheus.output.MetisCsvOutputVo;
 import com.coocaa.prometheus.output.MetricsCsvVo;
 import com.coocaa.prometheus.service.*;
 import com.coocaa.prometheus.util.PoiUtil;
@@ -24,7 +23,7 @@ import springfox.documentation.annotations.ApiIgnore;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.OutputStream;
-import java.util.List;
+import java.util.*;
 
 /**
  * @description: 指标控制器
@@ -38,17 +37,12 @@ import java.util.List;
 public class TaskController {
     private PromQLService promQLService;
     private TaskService taskService;
-    private TaskMapper taskMapper;
 
     @PostMapping
     @ApiOperation(value = "定时任务分页列表")
     @ApiLog("定时任务分页列表")
     public ResponseEntity<ResultBean> gets(@RequestBody PageRequestBean pageRequestBean) {
-        RequestUtil.setDefaultPageBean(pageRequestBean);
-        String conditionString = SqlUtil.getConditionString(pageRequestBean.getConditions(), pageRequestBean.getConditionConnection());
-        List<Task> list = taskMapper.getPageAll(pageRequestBean.getPage() * pageRequestBean.getCount(), pageRequestBean.getCount(), conditionString, pageRequestBean.getOrderBy(), pageRequestBean.getSortType());
-        Integer pageAllSize = taskMapper.getPageAllSize(conditionString);
-        return ResponseHelper.OK(list, pageAllSize);
+        return promQLService.listByPage(pageRequestBean);
     }
 
     @DeleteMapping("/delete")
@@ -67,9 +61,10 @@ public class TaskController {
         return promQLService.getConditionByMetricsName(metricsName, minute);
     }
 
-    @PostMapping("/create")
+    @PostMapping("/create/{type}")
     @ApiOperation(value = "新建或更新监控定时任务(会重新启动定时任务可用于更改时间粒度)",
-            notes = "{\n" +
+            notes = "type: 0不启动定时任务1启动" +
+                    "{\n" +
                     "  \"id\": 0,\n" +
                     "  \"taskName\": \"指标实例-192.168.108.6\",\n" +
                     "  \"taskDescription\": \"内存Cache\",\n" +
@@ -86,8 +81,8 @@ public class TaskController {
                     "    }\n" +
                     "  }\n" +
                     "}")
-    public ResponseEntity<ResultBean> createTask(@RequestBody TaskInputVo task) {
-        return ResponseHelper.OK(taskService.createQueryMetricsTask(task));
+    public ResponseEntity<ResultBean> createTask(@RequestBody TaskInputVo task, @PathVariable Integer type) {
+        return ResponseHelper.OK(taskService.createQueryMetricsTask(task, type));
     }
 
     @PostMapping("/restart")
@@ -122,10 +117,18 @@ public class TaskController {
         PoiUtil.exportData2Csv(metricsCsvVos, Constant.MetisCsv.columns, Constant.MetisCsv.columnCns, os);
     }
 
-    @PostMapping("/train")
-    @ApiOperation(value = "导出指定时间段指定时间跨度的Metis训练数据并传入metis进行训练")
-    public ResponseEntity<ResultBean> exportMetisCsvToTrain(@RequestBody MetisCsvInputVo metisCsvInputVo) throws Exception {
-        JSONObject jsonObject = taskService.exportMetisCsvToTrain(metisCsvInputVo);
-        return ResponseHelper.OK(jsonObject);
+    @PostMapping("/mark")
+    @ApiOperation(value = "导出指定时间段指定时间跨度的Metis训练数据并进行人工标注")
+    public ResponseEntity<ResultBean> exportMetisCsvToMark(@RequestBody MetisCsvInputVo metisCsvInputVo) throws Exception {
+        MetisCsvOutputVo metisCsvOutputVo = taskService.exportMetisCsvToMark(metisCsvInputVo);
+        return ResponseHelper.OK(metisCsvOutputVo);
+    }
+
+    @PostMapping("/train/{modelName}")
+    @ApiOperation(value = "将人工标注好的数据传入Metis进行训练")
+    public ResponseEntity<ResultBean> exportMetisCsvToTrain(@RequestBody MetisCsvOutputVo trainVos, @PathVariable String modelName) {
+        taskService.exportMetisCsvToTrain(trainVos, modelName);
+        return ResponseHelper.OK();
+
     }
 }

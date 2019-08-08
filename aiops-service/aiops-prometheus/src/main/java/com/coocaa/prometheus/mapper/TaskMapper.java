@@ -26,6 +26,8 @@ public interface TaskMapper extends BaseMapper<Task> {
     String GET_PAGE_ALL = TableConstant.GET_PAGE_ALL + TableConstant.TABLE.TABLE_TASK + TableConstant.GET_PAGE_ALL_CONDITION;
     String GET_PAGE_ALL_SIZE = TableConstant.GET_PAGE_ALL_SIZE + TableConstant.TABLE.TABLE_TASK + TableConstant.GET_PAGE_ALL_SIZE_CONDITION;
 
+    String SELECT_TASK_BY_TEAMIDS = TableConstant.SELECT_ALL + TableConstant.TABLE.TABLE_TASK + TableConstant.LOGIC_EXIST_STR + "and FIND_IN_SET(${teamIds}," + TableConstant.USER.TEAM_IDS + ")";
+
     // 分页获取数据开始
     @Select(value = GET_PAGE_ALL)
     List<Task> getPageAll(Integer page, Integer count, String conditions, String orderBy, String sortType);
@@ -40,4 +42,7 @@ public interface TaskMapper extends BaseMapper<Task> {
 
     @Select(value = FINDALL)
     List<Task> findAll();
+
+    @Select(value = SELECT_TASK_BY_TEAMIDS)
+    List<Task> selectTaskByTeamIds(@Param("teamIds") String teamIds);
 }

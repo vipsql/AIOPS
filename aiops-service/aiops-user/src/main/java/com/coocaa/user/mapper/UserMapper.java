@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.coocaa.common.constant.TableConstant;
 import com.coocaa.user.entity.User;
 import org.apache.ibatis.annotations.*;
-import org.apache.ibatis.mapping.FetchType;
 
 import java.util.List;
 

@@ -25,7 +25,7 @@ public class TaskClient implements ITaskClient {
 
     @Override
     public R<Task> createTask(TaskInputVo task, Integer type) {
-        return R.data(taskService.createQueryMetricsTask(task));
+        return R.data(taskService.createQueryMetricsTask(task, type));
     }
 
     @Override

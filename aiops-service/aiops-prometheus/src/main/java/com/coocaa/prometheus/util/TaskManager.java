@@ -5,6 +5,7 @@ import com.coocaa.prometheus.rabbitMQ.TimingDataSender;
 import com.coocaa.prometheus.service.KpiService;
 import com.coocaa.prometheus.service.PromQLService;
 import com.coocaa.prometheus.service.impl.AsyncServiceTask;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.TaskScheduler;
@@ -18,12 +19,12 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * @program: intelligent_maintenance
  * @description: 定时任务管理
  * @author: dongyang_wu
  * @create: 2019-08-01 13:55
  */
 @Component("TaskManager")
+@Slf4j
 public class TaskManager implements DisposableBean {
     private final Map<Long, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>(16);
     private final Map<Long, AtomicInteger> taskErrorTimes = new ConcurrentHashMap<>(16);
@@ -49,6 +50,7 @@ public class TaskManager implements DisposableBean {
             ScheduledFuture<?> scheduledTask = this.scheduledTasks.remove(taskId);
             if (scheduledTask != null && !scheduledTask.isCancelled()) {
                 scheduledTask.cancel(true);
+                log.info("定时任务停止-" + taskId);
                 return true;
             }
         }

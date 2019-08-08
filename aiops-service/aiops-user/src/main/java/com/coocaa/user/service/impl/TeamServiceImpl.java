@@ -1,11 +1,15 @@
 package com.coocaa.user.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.extension.activerecord.Model;
 import com.coocaa.common.constant.StringConstant;
 import com.coocaa.common.constant.TableConstant;
-import com.coocaa.common.request.RequestBean;
+import com.coocaa.common.request.*;
+import com.coocaa.core.log.exception.ApiException;
+import com.coocaa.core.log.exception.ApiResultEnum;
+import com.coocaa.core.log.response.ResponseHelper;
+import com.coocaa.core.log.response.ResultBean;
 import com.coocaa.core.mybatis.base.BaseServiceImpl;
+import com.coocaa.core.secure.utils.SecureUtil;
 import com.coocaa.core.tool.utils.*;
 import com.coocaa.user.entity.Team;
 import com.coocaa.user.entity.User;
@@ -15,8 +19,8 @@ import com.coocaa.user.mapper.UserMapper;
 import com.coocaa.user.output.TeamOutputVo;
 import com.coocaa.user.service.TeamService;
 import lombok.AllArgsConstructor;
-import org.bouncycastle.jcajce.provider.symmetric.TEA;
 import org.springframework.beans.BeanUtils;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,8 +40,36 @@ public class TeamServiceImpl extends BaseServiceImpl<TeamMapper, Team> implement
     private TeamMapper teamMapper;
 
     @Override
+    public ResponseEntity<ResultBean> listByPage(PageRequestBean pageRequestBean) {
+        RequestUtil.setDefaultPageBean(pageRequestBean);
+        String conditionString = SqlUtil.getConditionString(pageRequestBean.getConditions(), pageRequestBean.getConditionConnection());
+        List<Team> list = teamMapper.getPageAll(pageRequestBean.getPage() * pageRequestBean.getCount(), pageRequestBean.getCount(), conditionString, pageRequestBean.getOrderBy(), pageRequestBean.getSortType());
+        List<TeamOutputVo> resultList = list.stream().map(team -> {
+            TeamOutputVo teamOutputVo = new TeamOutputVo();
+            BeanUtils.copyProperties(team, teamOutputVo);
+            List<User> users = userMapper.selectByTeamIdPage(team.getId(), 0, 5);
+            Integer size = userMapper.selectByTeamIdSize(team.getId());
+            teamOutputVo.setUserList(users);
+            teamOutputVo.setUserListTotal(size);
+            return teamOutputVo;
+        }).collect(Collectors.toList());
+        Integer pageAllSize = teamMapper.getPageAllSize(conditionString);
+        return ResponseHelper.OK(resultList, pageAllSize);
+    }
+
+    @Override
     @Transactional
     public TeamOutputVo createTeam(TeamInputVo teamInputVo) {
+        Long teamInputVoId = teamInputVo.getId();
+        // 修改权限判断
+        if (teamInputVoId != null && teamInputVoId != 0) {
+            Team team = teamMapper.selectById(teamInputVoId);
+            Long adminUserId = team.getAdminUserId();
+            Long currentUserId = SecureUtil.getUserId();
+            if (!currentUserId.equals(adminUserId)) {
+                throw new ApiException(ApiResultEnum.USER_NOT_TEAM_ADMIN);
+            }
+        }
         Team team = new Team();
         BeanUtils.copyProperties(teamInputVo, team);
         String userIdList = StringUtil.isEmpty(teamInputVo.getUserIdList()) ?

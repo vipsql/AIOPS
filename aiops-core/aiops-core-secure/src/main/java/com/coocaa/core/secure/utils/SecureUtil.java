@@ -1,11 +1,15 @@
 package com.coocaa.core.secure.utils;
 
+import com.baomidou.mybatisplus.extension.exceptions.ApiException;
+import com.coocaa.common.constant.Constant;
+import com.coocaa.common.constant.TableConstant;
 import com.coocaa.core.secure.AiOpsUser;
 import com.coocaa.core.secure.constant.*;
 import com.coocaa.core.secure.exception.SecureException;
 import com.coocaa.core.tool.utils.*;
 import io.jsonwebtoken.*;
 import lombok.SneakyThrows;
+import org.springframework.util.StringUtils;
 
 import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.HttpServletRequest;
@@ -25,6 +29,7 @@ public class SecureUtil {
     private final static String ACCOUNT = TokenConstant.ACCOUNT;
     private final static String USER_ID = TokenConstant.USER_ID;
     private final static String ROLE_ID = TokenConstant.ROLE_ID;
+    private final static String TEAM_IDS = TokenConstant.TEAM_IDS;
     private final static String USER_NAME = TokenConstant.USER_NAME;
     private final static String ROLE_NAME = TokenConstant.ROLE_NAME;
     private final static String TENANT_CODE = TokenConstant.TENANT_CODE;
@@ -71,12 +76,14 @@ public class SecureUtil {
         String account = Func.toStr(claims.get(SecureUtil.ACCOUNT));
         String roleName = Func.toStr(claims.get(SecureUtil.ROLE_NAME));
         String userName = Func.toStr(claims.get(SecureUtil.USER_NAME));
+        String teamIds = Func.toStr(claims.get(SecureUtil.TEAM_IDS));
         AiOpsUser aiOpsUser = new AiOpsUser();
         aiOpsUser.setUserId(userId);
         aiOpsUser.setAccount(account);
         aiOpsUser.setRoleId(roleId);
         aiOpsUser.setRoleName(roleName);
         aiOpsUser.setUserName(userName);
+        aiOpsUser.setTeamIds(teamIds);
         return aiOpsUser;
     }
 
@@ -165,6 +172,20 @@ public class SecureUtil {
         return (null == user) ? StringPool.EMPTY : user.getRoleName();
     }
 
+    /**
+     * 获取用户所属Team
+     *
+     * @return TeamIds
+     */
+    public static String getUserTeamIds() {
+        AiOpsUser user = getUser();
+        return (null == user) ? StringPool.EMPTY : user.getTeamIds();
+    }
+
+    public static String getUserTeamIds(HttpServletRequest request) {
+        AiOpsUser user = getUser(request);
+        return (null == user) ? StringPool.EMPTY : user.getRoleName();
+    }
 
     /**
      * 获取Claims

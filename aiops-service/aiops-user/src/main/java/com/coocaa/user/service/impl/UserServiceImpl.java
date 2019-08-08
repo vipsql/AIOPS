@@ -1,7 +1,9 @@
 package com.coocaa.user.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.coocaa.common.constant.TableConstant;
 import com.coocaa.common.request.RequestBean;
+import com.coocaa.core.secure.utils.SecureUtil;
 import com.coocaa.core.tool.utils.*;
 import com.coocaa.user.entity.User;
 import com.coocaa.user.input.UserInputVo;
@@ -16,6 +18,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -52,6 +55,19 @@ public class UserServiceImpl extends BaseServiceImpl<UserMapper, User> implement
     public User insertOrUpdate(UserInputVo userInputVo) {
         User user = new User();
         BeanUtils.copyProperties(userInputVo, user);
+        Long userId = user.getId();
+        Long currentUserId = SecureUtil.getUserId();
+        // 修改权限判断
+        if (userId != null && userId != 0 && !currentUserId.equals(userId)) {
+            User databaseUser = userMapper.selectById(userId);
+            // 修改的用户所在Team的所有管理员Id
+            List<String> adminUserIds = teamMapper.selectAdminUserIdsInTeamIds(TableConstant.ID, StringUtil.addBrackets(databaseUser.getTeamIds()));
+            // 判断当前用户Id是否在user的Team管理员Id里
+            if (CollectionUtil.isEmpty(adminUserIds) || !adminUserIds.contains(currentUserId + "")) {
+                throw new ApiException(ApiResultEnum.USER_NOT_USER_TEAM_ADMIN);
+            }
+            System.out.println(adminUserIds);
+        }
         user.insertOrUpdate();
         return fillUserTeams(user);
     }

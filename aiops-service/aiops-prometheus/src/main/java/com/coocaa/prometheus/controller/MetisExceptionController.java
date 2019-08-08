@@ -6,9 +6,9 @@ import com.coocaa.core.log.exception.ApiException;
 import com.coocaa.core.log.exception.ApiResultEnum;
 import com.coocaa.core.log.response.ResponseHelper;
 import com.coocaa.core.log.response.ResultBean;
-import com.coocaa.core.tool.utils.SqlUtil;
 import com.coocaa.prometheus.input.MetisExceptionInputVo;
 import com.coocaa.prometheus.mapper.MetisExceptionMapper;
+import com.coocaa.prometheus.mapper.TaskMapper;
 import com.coocaa.prometheus.service.MetisExceptionService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -16,7 +16,6 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 /**
  * @description: MetisException控制层
@@ -28,18 +27,12 @@ import java.util.List;
 @Api(description = "指标异常模块", tags = "指标异常接口")
 @AllArgsConstructor
 public class MetisExceptionController {
-    private MetisExceptionMapper metisExceptionMapper;
     private MetisExceptionService metisExceptionService;
-
     @PostMapping
     @ApiOperation(value = "分页获取指标异常列表",
             notes = "(以metrics_id为条件可以查询指定指标的历史异常记录)")
     public ResponseEntity<ResultBean> gets(@RequestBody PageRequestBean pageRequestBean) {
-        RequestUtil.setDefaultPageBean(pageRequestBean);
-        String conditionString = SqlUtil.getConditionString(pageRequestBean.getConditions(), pageRequestBean.getConditionConnection());
-        List list = metisExceptionMapper.getPageAll(pageRequestBean.getPage() * pageRequestBean.getCount(), pageRequestBean.getCount(), conditionString, pageRequestBean.getOrderBy(), pageRequestBean.getSortType());
-        Integer pageAllSize = metisExceptionMapper.getPageAllSize(conditionString);
-        return ResponseHelper.OK(list, pageAllSize);
+        return metisExceptionService.listByPage(pageRequestBean);
     }
 
     @DeleteMapping("/delete")

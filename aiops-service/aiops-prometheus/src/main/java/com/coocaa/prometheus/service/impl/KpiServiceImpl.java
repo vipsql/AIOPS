@@ -2,7 +2,6 @@ package com.coocaa.prometheus.service.impl;
 
 import com.coocaa.core.mybatis.base.BaseServiceImpl;
 import com.coocaa.prometheus.entity.Kpi;
-import com.coocaa.prometheus.entity.VectorData;
 import com.coocaa.prometheus.mapper.KpiMapper;
 import com.coocaa.prometheus.service.KpiService;
 import com.coocaa.prometheus.service.PromQLService;
@@ -28,8 +27,7 @@ public class KpiServiceImpl extends BaseServiceImpl<KpiMapper, Kpi> implements K
         HashMap<String, String> conditions = new HashMap<>();
         conditions.put("instance", "172.16.33.31:9100");
         String realQuery = PromQLUtil.getQueryConditionStr(kpi.getPromExpression(), conditions);
-        List<VectorData> vectorData = promQLService.instantQuery(realQuery, null, null);
-        System.out.println(vectorData);
+        promQLService.instantQuery(realQuery, null, null);
         kpi.insertOrUpdate();
         return kpi;
     }

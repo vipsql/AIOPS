@@ -2,10 +2,13 @@ package com.coocaa.prometheus.service.impl;
 
 import com.alibaba.fastjson.*;
 import com.coocaa.common.constant.Constant;
+import com.coocaa.common.request.PageRequestBean;
+import com.coocaa.common.request.RequestUtil;
 import com.coocaa.core.log.exception.ApiException;
 import com.coocaa.core.log.exception.ApiResultEnum;
 import com.coocaa.core.log.response.ResponseHelper;
 import com.coocaa.core.log.response.ResultBean;
+import com.coocaa.core.secure.utils.SecureUtil;
 import com.coocaa.core.tool.api.R;
 import com.coocaa.core.tool.base.BaseException;
 import com.coocaa.core.tool.response.CodeEnum;
@@ -17,9 +20,11 @@ import com.coocaa.prometheus.common.PromNorm;
 import com.coocaa.prometheus.dto.MetisDto;
 import com.coocaa.prometheus.entity.*;
 import com.coocaa.prometheus.input.QueryMetricProperty;
+import com.coocaa.prometheus.mapper.TaskMapper;
 import com.coocaa.prometheus.output.MetricsCsvVo;
 import com.coocaa.prometheus.service.PromQLService;
 import com.coocaa.prometheus.util.PromQLUtil;
+import com.coocaa.user.feign.IUserClient;
 import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,54 +57,29 @@ public class PromQLServiceImpl implements PromQLService {
     private RestTemplate restTemplate;
     @Autowired
     private IDetectorClient detectorFeign;
+    @Autowired
+    private TaskMapper taskMapper;
+    @Autowired
+    private IUserClient userClient;
     @Value("${web.server.prometheus.apiUrl}")
     private String serverUrl;
 
     private SimpleDateFormat metisDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     @Override
-    public ResponseEntity<ResultBean> queryMetrics(Task task, Integer type) {
-        if (Constant.NumberType.ZERO_PROPERTY.equals(type)) {
-            QueryInstant queryInstant = task.getQueryInstant();
-            return ResponseHelper.OK(instantQuery(queryInstant.getQuery(), queryInstant.getDate(), queryInstant.getTimeout()));
-        } else if (Constant.NumberType.ONE_PROPERTY.equals(type)) {
-            QueryRange queryRange = task.getQueryRange();
-            List<MatrixData> matrixData = rangeQuery(queryRange.getQuery(), queryRange.getStart(), queryRange.getEnd(), queryRange.getStep());
-            return ResponseHelper.OK(matrixData);
-        }
-        throw new ApiException(ApiResultEnum.FUNCTION_NOT_EXEC_ERROR);
-    }
-
-    @Override
-    public ResponseEntity<ResultBean> exceptionDetect(QueryMetricProperty queryMetricProperty, Integer type) throws ExecutionException, InterruptedException {
-        String realQuery = null;
-        if (Constant.NumberType.ZERO_PROPERTY.equals(type)) {
-            queryMetricProperty.setMetricsName(PromNorm.REQUEST_TOTAL);
-            realQuery = getRealHttpTotalQuery(queryMetricProperty);
-        } else if (Constant.NumberType.ONE_PROPERTY.equals(type)) {
-            realQuery = PromNorm.UPLOAD_BAND_WIDTH;
-        } else if (Constant.NumberType.TWO_PROPERTY.equals(type)) {
-            realQuery = PromNorm.DOWNLOAD_BAND_WIDTH;
-        } else if (Constant.NumberType.THREE_PROPERTY.equals(type)) {
-            queryMetricProperty.setMetricsName(PromNorm.NODE_SOCKSTAT_TCP_ALLOC);
-            realQuery = getRealHttpTotalQuery(queryMetricProperty);
-        } else if (Constant.NumberType.FOUR_PROPERTY.equals(type)) {
-            queryMetricProperty.setMetricsName(PromNorm.NODE_CPU_SECONDS_TOTAL);
-            realQuery = getRealHttpTotalQuery(queryMetricProperty);
-        } else if (Constant.NumberType.FIVE_PROPERTY.equals(type)) {
-            realQuery = getRealHttpTotalQuery(queryMetricProperty);
-        } else if (Constant.NumberType.SIX_PROPERTY.equals(type)) {
-            queryMetricProperty.setMetricsName(PromNorm.NODE_DISK_IO_TIME_SECONDS_TOTAL);
-            realQuery = getRealHttpTotalQuery(queryMetricProperty);
-        } else if (Constant.NumberType.SEVEN_PROPERTY.equals(type)) {
-            queryMetricProperty.setMetricsName(PromNorm.NODE_NETWORK_RECEIVE_BYTES_TOTAL);
-            realQuery = getRealHttpTotalQuery(queryMetricProperty);
-        } else if (Constant.NumberType.EIGHT_PROPERTY.equals(type)) {
-            queryMetricProperty.setMetricsName(PromNorm.NODE_MEMORY_CACHED_BYTES);
-            realQuery = getRealHttpTotalQuery(queryMetricProperty);
-        }
-        Map<String, MatrixData> realResult = detectByMetis(new Date(), realQuery, null, null);
-        return ResponseHelper.OK(realResult);
+    public ResponseEntity<ResultBean> listByPage(PageRequestBean pageRequestBean) {
+        RequestUtil.setDefaultPageBean(pageRequestBean);
+        String conditionString = SqlUtil.getConditionString(pageRequestBean.getConditions(), pageRequestBean.getConditionConnection());
+        String teamIds = userClient.userById(SecureUtil.getUserId()).getData().getTeamIds();
+        // 增加条件 用户的TeamIds在task的Teamids下
+        conditionString = SqlUtil.addTeamIdsConditions(conditionString, teamIds);
+        List<Task> list = taskMapper.getPageAll(pageRequestBean.getPage() * pageRequestBean.getCount(), pageRequestBean.getCount(), conditionString, pageRequestBean.getOrderBy(), pageRequestBean.getSortType());
+        List<Task> resultList = list.stream().map(task -> {
+            task.setQueryRange(JSON.parseObject(task.getArgs(), QueryRange.class));
+            return task;
+        }).collect(Collectors.toList());
+        Integer pageAllSize = taskMapper.getPageAllSize(conditionString);
+        return ResponseHelper.OK(resultList, pageAllSize);
     }
 
     @Override
@@ -192,7 +172,7 @@ public class PromQLServiceImpl implements PromQLService {
     }
 
     @Override
-    public List<MetricsCsvVo> createMetisCsvVo(Date now, String realQuery) throws ExecutionException, InterruptedException {
+    public List<MetricsCsvVo> createMetisCsvVo(Date now, String realQuery, MetisDto metisDto) throws ExecutionException, InterruptedException {
         System.out.println("-----------当前时刻");
         Date date = DateUtil.setHours(now, -3);
         CompletableFuture<List<MatrixData>> metisDataAsyncA = getMetisDataFirst(realQuery, date, now);
@@ -209,19 +189,23 @@ public class PromQLServiceImpl implements PromQLService {
         Map<String, MatrixData> metisDataC = metisDataAsyncC.get().stream().collect(Collectors.toMap(MatrixData::specialKey, a -> a, (k1, k2) -> k1));
         List<MetricsCsvVo> resultLists = new ArrayList<>();
         metisDataA.forEach((key, value) -> {
-            MatrixData matrixData = metisDataA.get(key);
+            MatrixData matrixDataA = metisDataA.get(key);
+            MatrixData matrixDataB = metisDataB.get(key);
+            MatrixData matrixDataC = metisDataC.get(key);
+            if (matrixDataA == null || matrixDataB == null || matrixDataC == null)
+                return;
             MetricsCsvVo metricsCsvVo = MetricsCsvVo.builder()
-                    .viewId(2012L)
-                    .viewName("指标集")
-                    .attrName(matrixData.getMetric().getInstance())
-                    .attrId(19201L)
-                    .dataA(matrixData.getMetisData())
-                    .dataB(metisDataB.get(key).getMetisData())
-                    .dataC(metisDataC.get(key).getMetisData())
+                    .viewId(metisDto.getViewId())
+                    .viewName(metisDto.getViewName())
+                    .attrName(metisDto.getAttrName())
+                    .attrId(metisDto.getAttrId())
+                    .dataA(matrixDataA.getMetisData())
+                    .dataB(matrixDataB.getMetisData())
+                    .dataC(matrixDataC.getMetisData())
                     .dateTime(now.getTime() / 1000)
                     .window("180")
-                    .source("aiops")
-                    .trainOrTest("train")
+                    .source(metisDto.getSource())
+                    .trainOrTest(metisDto.getTrainOrTest())
                     .positiveOrNegative("positive")
                     .build();
             resultLists.add(metricsCsvVo);
@@ -289,28 +273,6 @@ public class PromQLServiceImpl implements PromQLService {
         return matrixDataMap;
     }
 
-    private String getRealHttpTotalQuery(QueryMetricProperty queryMetricProperty) {
-        String instance = queryMetricProperty.getInstance();
-        String request = queryMetricProperty.getRequest();
-        String status = queryMetricProperty.getStatus();
-        List<String> conditionQuery = new ArrayList<>();
-        if (Func.isNotEmpty(instance)) {
-            conditionQuery.add(PromQLUtil.getQueryConditionStr(QueryMetricProperty.HttpRequestsTotalNameKey.INSTANCE, instance));
-        }
-        if (Func.isNotEmpty(request)) {
-            conditionQuery.add(PromQLUtil.getQueryConditionStr(QueryMetricProperty.HttpRequestsTotalNameKey.REQUEST, request));
-        }
-        if (Func.isNotEmpty(status)) {
-            conditionQuery.add(PromQLUtil.getQueryConditionStr(QueryMetricProperty.HttpRequestsTotalNameKey.STATUS, status));
-        }
-        if (!CollectionUtils.isEmpty(conditionQuery)) {
-            StringBuffer condition = new StringBuffer();
-            condition.append("{").append(StringUtils.collectionToDelimitedString(conditionQuery, ",")).append("}");
-            return String.format(queryMetricProperty.getMetricsName(), condition.toString());
-        }
-        return queryMetricProperty.getMetricsName().replace("%s", "");
-    }
-
     @Async
     CompletableFuture<List<MatrixData>> getMetisDataFirst(String query, Date begin, Date end) {
         List<MatrixData> matrixData = rangeQuery(query, begin, end, 60);
@@ -349,6 +311,76 @@ public class PromQLServiceImpl implements PromQLService {
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
         URI uri = builder.build().encode().toUri();
         return uri;
+    }
+
+
+    // 以下方法已废弃
+    @Override
+    public ResponseEntity<ResultBean> queryMetrics(Task task, Integer type) {
+        if (Constant.NumberType.ZERO_PROPERTY.equals(type)) {
+            QueryInstant queryInstant = null;
+            return ResponseHelper.OK(instantQuery(queryInstant.getQuery(), queryInstant.getDate(), queryInstant.getTimeout()));
+        } else if (Constant.NumberType.ONE_PROPERTY.equals(type)) {
+            QueryRange queryRange = task.getQueryRange();
+            List<MatrixData> matrixData = rangeQuery(queryRange.getQuery(), queryRange.getStart(), queryRange.getEnd(), queryRange.getStep());
+            return ResponseHelper.OK(matrixData);
+        }
+        throw new ApiException(ApiResultEnum.FUNCTION_NOT_EXEC_ERROR);
+    }
+
+
+    @Override
+    public ResponseEntity<ResultBean> exceptionDetect(QueryMetricProperty queryMetricProperty, Integer type) throws ExecutionException, InterruptedException {
+        String realQuery = null;
+        if (Constant.NumberType.ZERO_PROPERTY.equals(type)) {
+            queryMetricProperty.setMetricsName(PromNorm.REQUEST_TOTAL);
+            realQuery = getRealHttpTotalQuery(queryMetricProperty);
+        } else if (Constant.NumberType.ONE_PROPERTY.equals(type)) {
+            realQuery = PromNorm.UPLOAD_BAND_WIDTH;
+        } else if (Constant.NumberType.TWO_PROPERTY.equals(type)) {
+            realQuery = PromNorm.DOWNLOAD_BAND_WIDTH;
+        } else if (Constant.NumberType.THREE_PROPERTY.equals(type)) {
+            queryMetricProperty.setMetricsName(PromNorm.NODE_SOCKSTAT_TCP_ALLOC);
+            realQuery = getRealHttpTotalQuery(queryMetricProperty);
+        } else if (Constant.NumberType.FOUR_PROPERTY.equals(type)) {
+            queryMetricProperty.setMetricsName(PromNorm.NODE_CPU_SECONDS_TOTAL);
+            realQuery = getRealHttpTotalQuery(queryMetricProperty);
+        } else if (Constant.NumberType.FIVE_PROPERTY.equals(type)) {
+            realQuery = getRealHttpTotalQuery(queryMetricProperty);
+        } else if (Constant.NumberType.SIX_PROPERTY.equals(type)) {
+            queryMetricProperty.setMetricsName(PromNorm.NODE_DISK_IO_TIME_SECONDS_TOTAL);
+            realQuery = getRealHttpTotalQuery(queryMetricProperty);
+        } else if (Constant.NumberType.SEVEN_PROPERTY.equals(type)) {
+            queryMetricProperty.setMetricsName(PromNorm.NODE_NETWORK_RECEIVE_BYTES_TOTAL);
+            realQuery = getRealHttpTotalQuery(queryMetricProperty);
+        } else if (Constant.NumberType.EIGHT_PROPERTY.equals(type)) {
+            queryMetricProperty.setMetricsName(PromNorm.NODE_MEMORY_CACHED_BYTES);
+            realQuery = getRealHttpTotalQuery(queryMetricProperty);
+        }
+        Map<String, MatrixData> realResult = detectByMetis(new Date(), realQuery, null, null);
+        return ResponseHelper.OK(realResult);
+    }
+
+    private String getRealHttpTotalQuery(QueryMetricProperty queryMetricProperty) {
+        String instance = queryMetricProperty.getInstance();
+        String request = queryMetricProperty.getRequest();
+        String status = queryMetricProperty.getStatus();
+        List<String> conditionQuery = new ArrayList<>();
+        if (Func.isNotEmpty(instance)) {
+            conditionQuery.add(PromQLUtil.getQueryConditionStr(QueryMetricProperty.HttpRequestsTotalNameKey.INSTANCE, instance));
+        }
+        if (Func.isNotEmpty(request)) {
+            conditionQuery.add(PromQLUtil.getQueryConditionStr(QueryMetricProperty.HttpRequestsTotalNameKey.REQUEST, request));
+        }
+        if (Func.isNotEmpty(status)) {
+            conditionQuery.add(PromQLUtil.getQueryConditionStr(QueryMetricProperty.HttpRequestsTotalNameKey.STATUS, status));
+        }
+        if (!CollectionUtils.isEmpty(conditionQuery)) {
+            StringBuffer condition = new StringBuffer();
+            condition.append("{").append(StringUtils.collectionToDelimitedString(conditionQuery, ",")).append("}");
+            return String.format(queryMetricProperty.getMetricsName(), condition.toString());
+        }
+        return queryMetricProperty.getMetricsName().replace("%s", "");
     }
 
 }

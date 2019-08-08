@@ -1,9 +1,11 @@
 package com.coocaa.core.tool.utils;
 
 import com.coocaa.common.constant.StringConstant;
+import com.coocaa.common.constant.TableConstant;
 import com.coocaa.common.request.PageRequestBean;
 import com.coocaa.common.request.RequestBean;
 import com.google.common.collect.ImmutableMap;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -52,5 +54,37 @@ public class SqlUtil {
             return sql.toString().substring(0, sql.length() - 3);
         }
         return null;
+    }
+
+    /**
+     * 增加条件
+     *
+     * @return
+     */
+    public static String addConditon(String condition, String key, String connection, String value) {
+        if (StringUtils.isEmpty(condition)) {
+            return key + " " + connection + " " + value;
+        } else {
+            return condition + " AND " + key + " " + connection + " " + value;
+        }
+    }
+
+    /**
+     * 在TeamIds找含有用户所属的TeamId的
+     */
+    public static String addTeamIdsConditions(String conditions, String userTeamIds) {
+        StringBuffer sql = new StringBuffer();
+        if (StringUtils.isEmpty(conditions)) {
+            sql.append(" ").append("FIND_IN_SET(");
+        } else {
+            sql.append(" ").append(conditions).append(" and ").append("FIND_IN_SET(");
+        }
+        if (StringUtils.isEmpty(userTeamIds)) {
+            throw new RuntimeException("user not hava userTeamIds");
+        }
+        List<String> teamIdList = Arrays.asList(userTeamIds.split(","));
+        String teamIdOrStr = String.join(" OR ", teamIdList);
+        sql.append(teamIdOrStr).append(",").append(TableConstant.USER.TEAM_IDS).append(") ");
+        return sql.toString();
     }
 }

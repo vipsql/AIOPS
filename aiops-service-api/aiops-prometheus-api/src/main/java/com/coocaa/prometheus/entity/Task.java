@@ -2,6 +2,7 @@ package com.coocaa.prometheus.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 import com.baomidou.mybatisplus.extension.activerecord.Model;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import javax.validation.constraints.NotEmpty;
@@ -58,6 +59,7 @@ public class Task extends Model<Task> {
     /**
      * 定时任务参数
      */
+    @JsonIgnore
     private String args;
     /**
      * 是否启用0禁用 1启用
@@ -76,10 +78,9 @@ public class Task extends Model<Task> {
      */
     private String teamIds;
     @TableField(exist = false)
-    private QueryInstant queryInstant;
-    @TableField(exist = false)
     private QueryRange queryRange;
     @TableLogic
+    @JsonIgnore
     private Integer logic;
     /**
      * 更新时间

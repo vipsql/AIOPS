@@ -6,7 +6,6 @@ import com.coocaa.core.tool.api.R;
 import com.coocaa.notice.entity.Mail;
 import com.coocaa.notice.feign.INoticeClient;
 import com.coocaa.prometheus.entity.MatrixData;
-import com.coocaa.prometheus.mapper.KpiMapper;
 import com.coocaa.user.entity.User;
 import com.coocaa.user.feign.IUserClient;
 import lombok.AllArgsConstructor;
@@ -29,7 +28,6 @@ import java.util.*;
 @AllArgsConstructor
 public class AsyncServiceTask {
     private INoticeClient noticeClient;
-    private KpiMapper kpiMapper;
     private IUserClient userClient;
 
     @Async
