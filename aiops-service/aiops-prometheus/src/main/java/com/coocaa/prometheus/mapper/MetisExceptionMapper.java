@@ -3,7 +3,6 @@ package com.coocaa.prometheus.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.coocaa.common.constant.TableConstant;
 import com.coocaa.prometheus.entity.MetisException;
-import com.coocaa.prometheus.entity.Metrics;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 

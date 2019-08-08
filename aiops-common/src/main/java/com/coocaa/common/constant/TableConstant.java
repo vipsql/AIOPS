@@ -43,6 +43,7 @@ public interface TableConstant {
         String TABLE_TEAM = "team";
         String TABLE_METRICS = "metrics";
         String TABLE_METIS_EXCEPTION = "metis_exception";
+        String TABLE_KPI = "kpi";
     }
 
     interface USER {

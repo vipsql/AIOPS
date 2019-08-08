@@ -16,7 +16,6 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class VectorData {
-    private Integer taskId;
     private Metric metric;
 
     /**

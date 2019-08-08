@@ -49,13 +49,6 @@ public interface PromQLService {
      */
     Map<String, MatrixData> getRangeValues(MetisDto metisDto, Date date, String metricName, Integer span, Integer step, Map<String, String> conditions) throws ExecutionException, InterruptedException;
 
-//    /**
-//     * 根据指标名和条件获取最新点,返回最新点是否异常的预测结果值
-//     *
-//     * @param metricName 指标名带%s
-//     * @param conditions 条件
-//     */
-//    ResponseEntity<ResultBean> getInstantValues(String metricName, Map<String, String> conditions);
 
     /**
      * 获取公司普罗米修斯监控端点
@@ -89,7 +82,7 @@ public interface PromQLService {
     /**
      * 生成Metis训练集CSV文件
      */
-    List<MetricsCsvVo> createMetisCsvVo(Date now, String realQuery, Long viewId, Long attrId) throws ExecutionException, InterruptedException;
+    List<MetricsCsvVo> createMetisCsvVo(Date now, String realQuery) throws ExecutionException, InterruptedException;
 
     /**
      * 范围查询map结果集
@@ -103,22 +96,5 @@ public interface PromQLService {
 
     List<Map<String, Object>> rangeQueryToList(String query, Date start, Date end, Integer step);
 
-    /**
-     * 查询元数据
-     *
-     * @param match match[]=<series_selector>: 选择器是series_selector。这个参数个数必须大于等于1
-     * @param start start=<rfc3339 | unix_timestamp>: 开始时间戳
-     * @param end   end=<rfc3339 | unix_timestamp>: 结束时间戳
-     * @return
-     */
-    String metadataQuery(List<String> match, Date start, Date end);
-
-    /**
-     * 查询标签值
-     *
-     * @param label 标签
-     * @return
-     */
-    String labelQuery(String label);
 
 }

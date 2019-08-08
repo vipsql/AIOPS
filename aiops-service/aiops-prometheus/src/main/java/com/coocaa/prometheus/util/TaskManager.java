@@ -1,9 +1,8 @@
 package com.coocaa.prometheus.util;
 
 import com.coocaa.core.tool.utils.SpringUtil;
-import com.coocaa.notice.feign.INoticeClient;
 import com.coocaa.prometheus.rabbitMQ.TimingDataSender;
-import com.coocaa.prometheus.service.MetricsService;
+import com.coocaa.prometheus.service.KpiService;
 import com.coocaa.prometheus.service.PromQLService;
 import com.coocaa.prometheus.service.impl.AsyncServiceTask;
 import org.springframework.beans.factory.DisposableBean;
@@ -33,7 +32,7 @@ public class TaskManager implements DisposableBean {
     private volatile static PromQLService promQLService;
     private volatile static TimingDataSender timingDataSender;
     private volatile static AsyncServiceTask asyncServiceTask;
-    private volatile static MetricsService metricsService;
+    private volatile static KpiService kpiService;
     private volatile Integer notifyNumber = 5;
 
     public void addCronTask(Long taskId, Runnable task, String cronExpression) {
@@ -115,17 +114,17 @@ public class TaskManager implements DisposableBean {
         return asyncServiceTask;
     }
 
-    public static MetricsService getMetricsService() {
+    public static KpiService getKpiService() {
         //第一重判断
-        if (metricsService == null) {
+        if (kpiService == null) {
             //锁定代码块
-            synchronized (MetricsService.class) {
+            synchronized (KpiService.class) {
                 //第二重判断
-                if (metricsService == null) {
-                    metricsService = SpringUtil.getBean(MetricsService.class);
+                if (kpiService == null) {
+                    kpiService = SpringUtil.getBean(KpiService.class);
                 }
             }
         }
-        return metricsService;
+        return kpiService;
     }
 }

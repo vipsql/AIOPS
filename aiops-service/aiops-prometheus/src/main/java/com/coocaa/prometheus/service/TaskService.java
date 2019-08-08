@@ -1,12 +1,18 @@
 package com.coocaa.prometheus.service;
 
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.coocaa.common.request.RequestBean;
 import com.coocaa.core.mybatis.base.BaseService;
 import com.coocaa.prometheus.entity.Task;
+import com.coocaa.prometheus.input.MetisCsvInputVo;
 import com.coocaa.prometheus.input.TaskInputVo;
+import com.coocaa.prometheus.output.MetricsCsvVo;
+
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @program: intelligent_maintenance
@@ -29,20 +35,23 @@ public interface TaskService extends BaseService<Task> {
      * 启动所有定时任务
      */
     void bootstrapAllTask();
+    /**
+     * 导出对应指标的Csv训练数据
+     */
+    List<MetricsCsvVo> exportMetisCsv(MetisCsvInputVo metisCsvInputVo) throws ExecutionException, InterruptedException;
 
     /**
-     * 根据 taskId 修改 task
-     *
-     * @param id
-     * @param cron
+     * 导出数据并传入Metis进行训练
+     * @param metisCsvInputVo
      * @return
+     * @throws ExecutionException
+     * @throws InterruptedException
      */
-    boolean updateCron(Integer id, String cron);
+    JSONObject exportMetisCsvToTrain(MetisCsvInputVo metisCsvInputVo) throws ExecutionException, InterruptedException;
 
     /**
-     * 查询全部任务信息
-     *
-     * @return
+     * 重新启动定时任务
      */
-    IPage<Task> searchAllTaskCron(Page page);
+    void restartTask(RequestBean requestbean);
+
 }

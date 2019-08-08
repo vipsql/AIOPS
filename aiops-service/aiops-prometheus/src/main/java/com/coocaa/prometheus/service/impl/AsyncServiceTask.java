@@ -6,8 +6,7 @@ import com.coocaa.core.tool.api.R;
 import com.coocaa.notice.entity.Mail;
 import com.coocaa.notice.feign.INoticeClient;
 import com.coocaa.prometheus.entity.MatrixData;
-import com.coocaa.prometheus.entity.Metrics;
-import com.coocaa.prometheus.mapper.MetricsMapper;
+import com.coocaa.prometheus.mapper.KpiMapper;
 import com.coocaa.user.entity.User;
 import com.coocaa.user.feign.IUserClient;
 import lombok.AllArgsConstructor;
@@ -30,16 +29,14 @@ import java.util.*;
 @AllArgsConstructor
 public class AsyncServiceTask {
     private INoticeClient noticeClient;
-    private MetricsMapper metricsMapper;
+    private KpiMapper kpiMapper;
     private IUserClient userClient;
 
     @Async
-    public ListenableFuture<String> sendDetectResult(Map<String, MatrixData> matrixDatas, Long metricsId) {
+    public ListenableFuture<String> sendDetectResult(Map<String, MatrixData> matrixDatas, String teamIds, String taskName) {
         log.info("开始发送邮件给小组成员");
         // 判断数据是否异常，异常则加入异常列表并发通知给负责人
         // 发给team中的所有成员
-        Metrics metrics = metricsMapper.selectById(metricsId);
-        String teamIds = metrics.getTeamIds();
         R<Set<User>> rpcResult = userClient.getTeamUsers(teamIds, StringConstant.OR);
         if (rpcResult.isSuccess()) {
             Set<User> users = rpcResult.getData();
@@ -50,7 +47,7 @@ public class AsyncServiceTask {
             users.forEach(user -> {
                 if (StringUtils.isEmpty(user.getMail()) || !RegexUtil.checkEmail(user.getMail()))
                     return;
-                mailList.add(getMail(user.getMail(), metrics.getMetricName() + "指标异常通知", content));
+                mailList.add(getMail(user.getMail(), taskName + "指标异常通知", content));
             });
             noticeClient.sendMails(mailList);
         }

@@ -55,7 +55,6 @@ public class PromQLServiceImpl implements PromQLService {
     @Value("${web.server.prometheus.apiUrl}")
     private String serverUrl;
 
-    private SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-ddHH:mm:ss.SSS");
     private SimpleDateFormat metisDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     @Override
@@ -159,11 +158,13 @@ public class PromQLServiceImpl implements PromQLService {
             date = new Date();
         }
         String url = serverUrl + "query?query=" + query + "&time=" + (date.getTime() / 1000) + (timeout == null ? "" : ("&timeout=" + timeout));
-
-        List<String> urlParams = parseUrl(url);
-
-        JSONObject dataJson = getQueryResult(urlParams.get(0), urlParams.get(1));
-        return parseVector(dataJson);
+        System.out.println(url);
+        URI uri = parseUrl(url);
+        ResponseEntity<String> forEntity = restTemplate.getForEntity(uri, String.class);
+        JSONObject jsonObject = verifyResponse(forEntity);
+        JSONArray jsonArray = jsonObject.getJSONObject("data").getJSONArray("result");
+        List<VectorData> vectorData = JSON.parseArray(jsonArray.toJSONString(), VectorData.class);
+        return vectorData;
     }
 
     @Override
@@ -183,8 +184,7 @@ public class PromQLServiceImpl implements PromQLService {
     private JSONArray sendRangQuery(String query, Date start, Date end, Integer step) {
         String url = serverUrl + "query_range?query=" + query + "&start=" + parseTime(start) + "&end=" + parseTime(end) + "&step=" + step;
         System.out.println(url);
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
-        URI uri = builder.build().encode().toUri();
+        URI uri = parseUrl(url);
         ResponseEntity<String> forEntity = restTemplate.getForEntity(uri, String.class);
         JSONObject jsonObject = verifyResponse(forEntity);
         JSONArray jsonArray = jsonObject.getJSONObject("data").getJSONArray("result");
@@ -192,32 +192,32 @@ public class PromQLServiceImpl implements PromQLService {
     }
 
     @Override
-    public List<MetricsCsvVo> createMetisCsvVo(Date now, String realQuery, Long viewId, Long attrId) throws ExecutionException, InterruptedException {
+    public List<MetricsCsvVo> createMetisCsvVo(Date now, String realQuery) throws ExecutionException, InterruptedException {
         System.out.println("-----------当前时刻");
         Date date = DateUtil.setHours(now, -3);
         CompletableFuture<List<MatrixData>> metisDataAsyncA = getMetisDataFirst(realQuery, date, now);
         System.out.println("------------一天前");
         Date yesterday = DateUtil.setDays(now, -1);
-        CompletableFuture<List<String>> metisDataAsyncB = getMetisData(realQuery, DateUtil.setHours(yesterday, -3), DateUtil.setHours(yesterday, 3));
+        CompletableFuture<List<MatrixData>> metisDataAsyncB = getMetisDataFirst(realQuery, DateUtil.setHours(yesterday, -3), DateUtil.setHours(yesterday, 3));
         System.out.println("------------一周前");
         Date weekEarlier = DateUtil.setWeeks(now, -1);
-        CompletableFuture<List<String>> metisDataAsyncC = getMetisData(realQuery, DateUtil.setHours(weekEarlier, -3), DateUtil.setHours(weekEarlier, 3));
+        CompletableFuture<List<MatrixData>> metisDataAsyncC = getMetisDataFirst(realQuery, DateUtil.setHours(weekEarlier, -3), DateUtil.setHours(weekEarlier, 3));
         // 等待3者执行完成 多线程异步执行
         CompletableFuture.allOf(metisDataAsyncA, metisDataAsyncB, metisDataAsyncC).join();
-        List<MatrixData> metisDataA = metisDataAsyncA.get();
-        List<String> metisDataB = metisDataAsyncB.get();
-        List<String> metisDataC = metisDataAsyncC.get();
+        Map<String, MatrixData> metisDataA = metisDataAsyncA.get().stream().collect(Collectors.toMap(MatrixData::specialKey, a -> a, (k1, k2) -> k1));
+        Map<String, MatrixData> metisDataB = metisDataAsyncB.get().stream().collect(Collectors.toMap(MatrixData::specialKey, a -> a, (k1, k2) -> k1));
+        Map<String, MatrixData> metisDataC = metisDataAsyncC.get().stream().collect(Collectors.toMap(MatrixData::specialKey, a -> a, (k1, k2) -> k1));
         List<MetricsCsvVo> resultLists = new ArrayList<>();
-        for (int i = 0; i < metisDataA.size(); i++) {
-            MatrixData matrixData = metisDataA.get(i);
+        metisDataA.forEach((key, value) -> {
+            MatrixData matrixData = metisDataA.get(key);
             MetricsCsvVo metricsCsvVo = MetricsCsvVo.builder()
-                    .viewId(viewId)
+                    .viewId(2012L)
                     .viewName("指标集")
                     .attrName(matrixData.getMetric().getInstance())
-                    .attrId(attrId)
+                    .attrId(19201L)
                     .dataA(matrixData.getMetisData())
-                    .dataB(metisDataB.get(i))
-                    .dataC(metisDataC.get(i))
+                    .dataB(metisDataB.get(key).getMetisData())
+                    .dataC(metisDataC.get(key).getMetisData())
                     .dateTime(now.getTime() / 1000)
                     .window("180")
                     .source("aiops")
@@ -225,7 +225,7 @@ public class PromQLServiceImpl implements PromQLService {
                     .positiveOrNegative("positive")
                     .build();
             resultLists.add(metricsCsvVo);
-        }
+        });
         return resultLists;
     }
 
@@ -322,29 +322,9 @@ public class PromQLServiceImpl implements PromQLService {
         return CompletableFuture.completedFuture(matrixData);
     }
 
-    @Async
-    CompletableFuture<List<String>> getMetisData(String query, Date begin, Date end) {
-        List<MatrixData> matrixData = rangeQuery(query, begin, end, 60);
-        List<String> metisString = new ArrayList<>();
-        matrixData.forEach(result -> {
-            StringBuffer sb = new StringBuffer();
-            result.getValues().forEach(item -> sb.append(getRealMetisValue(item)));
-            metisString.add(sb.substring(0, sb.length() - 1));
-        });
-        return CompletableFuture.completedFuture(metisString);
-    }
 
     private String getRealMetisValue(String item) {
         String substring = item.substring(item.indexOf(",") + 2, item.indexOf("]") - 1);
-//        if (substring.contains(".")) {
-//            substring = String.format("%.4f", Double.parseDouble(substring));
-//            Double aDouble = Double.valueOf(substring);
-//            aDouble = aDouble * 10000;
-//            return aDouble.intValue() + ",";
-//        } else if (substring.equals("0")) {
-//            substring = "10000";
-//            return substring + ",";
-//        }
         return substring + ",";
     }
 
@@ -365,55 +345,10 @@ public class PromQLServiceImpl implements PromQLService {
         return date.getTime() / 1000;
     }
 
-    private List<String> parseUrl(String url) {
-        List<String> urlParams = new ArrayList<>();
-        if (url.contains("{") && url.contains("}")) {
-            String json = "{" + url.substring(url.indexOf("{") + 1, url.indexOf("}")) + "}";
-            String newUrl = url.substring(0, url.indexOf("{") + 1) + "json" + url.substring(url.indexOf("}"));
-            urlParams.add(newUrl);
-            urlParams.add(json);
-        } else {
-            urlParams.add(url);
-            urlParams.add(null);
-        }
-        return urlParams;
-    }
-
-    private JSONObject getQueryResult(String url, String json) {
-        log.info("url: {}", url);
-        log.info("json: {}", json);
-        ResponseEntity<String> forEntity = restTemplate.getForEntity(url, String.class, json);
-
-        JSONObject jsonObject = verifyResponse(forEntity);
-//        String resultType = String.valueOf(dataJson.get("resultType"));
-        return JSON.parseObject(String.valueOf(jsonObject.get("data")));
-    }
-
-    private List<MatrixData> parseMatrix(JSONObject dataJson) {
-        return JSONObject.parseArray(dataJson.getJSONArray("result").toJSONString(), MatrixData.class);
-    }
-
-    private List<VectorData> parseVector(JSONObject dataJson) {
-        JSONArray jsonArray = new JSONArray(dataJson.getJSONArray("result"));
-        return JSONObject.parseArray(jsonArray.toJSONString(), VectorData.class);
-    }
-
-    @Override
-    public String metadataQuery(List<String> match, Date start, Date end) {
-        return null;
-    }
-
-    @Override
-    public String labelQuery(String label) {
-        return null;
-    }
-
-    private void parseScalar(JSONObject dataJson) {
-
-    }
-
-    private void parseString(JSONObject dataJson) {
-
+    private URI parseUrl(String url) {
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
+        URI uri = builder.build().encode().toUri();
+        return uri;
     }
 
 }

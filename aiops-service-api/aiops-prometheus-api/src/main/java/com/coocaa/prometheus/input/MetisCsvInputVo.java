@@ -23,5 +23,5 @@ public class MetisCsvInputVo {
     /**
      * 对应指标Id
      */
-    private Long metricsId;
+    private Long taskId;
 }

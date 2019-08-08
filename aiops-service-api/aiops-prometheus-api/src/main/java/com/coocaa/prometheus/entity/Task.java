@@ -50,7 +50,6 @@ public class Task extends Model<Task> {
     @NotEmpty(message = "定时计划不能为空")
     private String taskCron;
 
-    private Integer type;
     /**
      * 启动者
      */
@@ -72,6 +71,10 @@ public class Task extends Model<Task> {
      * 指标选用模型名
      */
     private String modelName;
+    /**
+     * team id集合
+     */
+    private String teamIds;
     @TableField(exist = false)
     private QueryInstant queryInstant;
     @TableField(exist = false)

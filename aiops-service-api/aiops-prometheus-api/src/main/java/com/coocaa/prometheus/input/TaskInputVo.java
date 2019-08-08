@@ -37,10 +37,6 @@ public class TaskInputVo {
     @NotEmpty(message = "定时计划不能为空")
     private String taskCron;
     /**
-     * 定时任务类型
-     */
-    private Integer type;
-    /**
      * 模型名
      */
     private String modelName;
@@ -48,5 +44,9 @@ public class TaskInputVo {
      * 定时任务所属指标
      */
     private Long metricsId;
+    /**
+     * 所属Team
+     */
+    private String teamIds;
     private QueryRange queryRange;
 }

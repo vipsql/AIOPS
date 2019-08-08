@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RestController;
 import springfox.documentation.annotations.ApiIgnore;
 
 /**
- * @program: intelligent_maintenance
  * @description: 远程定时任务实现类
  * @author: dongyang_wu
  * @create: 2019-08-01 13:42

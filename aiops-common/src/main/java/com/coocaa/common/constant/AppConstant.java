@@ -1,7 +1,6 @@
 package com.coocaa.common.constant;
 
 /**
- * @program: intelligent_maintenance
  * @description: 系统常量
  * @author: dongyang_wu
  * @create: 2019-07-28 21:11
@@ -14,7 +13,7 @@ public interface AppConstant {
     /**
      * 基础包
      */
-    String BASE_PACKAGES = "com.monitoring";
+    String BASE_PACKAGES = "com.coocaa";
     /**
      * 应用名前缀
      */

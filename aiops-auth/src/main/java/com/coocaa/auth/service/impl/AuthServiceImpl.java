@@ -30,7 +30,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * @program: intelligent_maintenance
  * @description:
  * @author: dongyang_wu
  * @create: 2019-07-29 10:19
