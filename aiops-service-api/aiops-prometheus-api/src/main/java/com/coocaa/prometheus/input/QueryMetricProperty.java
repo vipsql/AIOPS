@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 /**
- * @program: intelligent_maintenance
  * @description: http请求数查询
  * @author: dongyang_wu
  * @create: 2019-08-02 13:40

@@ -3,7 +3,9 @@ package com.coocaa.user.controller;
 import com.coocaa.common.request.*;
 import com.coocaa.core.log.response.ResponseHelper;
 import com.coocaa.core.log.response.ResultBean;
+import com.coocaa.user.entity.User;
 import com.coocaa.user.input.TeamInputVo;
+import com.coocaa.user.mapper.UserMapper;
 import com.coocaa.user.service.TeamService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -24,6 +26,7 @@ import java.util.*;
 @AllArgsConstructor
 public class TeamController {
     private TeamService teamService;
+    private UserMapper userMapper;
 
     @PostMapping
     @ApiOperation(value = "分页获取team列表,响应code为总数",
@@ -82,5 +85,13 @@ public class TeamController {
                     "[ \"13\",\"14\" ]")
     public ResponseEntity<ResultBean> getTeamUsers(@RequestBody List<String> teamIds, @PathVariable String connection) {
         return ResponseHelper.OK(teamService.getTeamUsers(teamIds, connection));
+    }
+
+    @GetMapping("/users/{teamId}/{page}/{count}")
+    @ApiOperation(value = "分页获取某个Team下的用户")
+    public ResponseEntity<ResultBean> getTeamUsersByPage(@PathVariable Long teamId, @PathVariable Integer page, @PathVariable Integer count) {
+        List<User> users = userMapper.selectByTeamIdPage(teamId, page * count, count);
+        Integer size = userMapper.selectByTeamIdSize(teamId);
+        return ResponseHelper.OK(users, size);
     }
 }

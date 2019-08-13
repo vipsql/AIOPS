@@ -2,6 +2,7 @@ package com.coocaa.prometheus.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 import com.baomidou.mybatisplus.extension.activerecord.Model;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.*;
@@ -40,6 +41,7 @@ public class MetisException extends Model<MetisException> {
     @TableField(value = "create_time", fill = FieldFill.INSERT)
     private Date createTime;
     @TableLogic
+    @JsonIgnore
     private Integer logic;
 
     @Override

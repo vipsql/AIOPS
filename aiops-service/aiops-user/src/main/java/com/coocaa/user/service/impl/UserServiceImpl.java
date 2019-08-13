@@ -66,7 +66,6 @@ public class UserServiceImpl extends BaseServiceImpl<UserMapper, User> implement
             if (CollectionUtil.isEmpty(adminUserIds) || !adminUserIds.contains(currentUserId + "")) {
                 throw new ApiException(ApiResultEnum.USER_NOT_USER_TEAM_ADMIN);
             }
-            System.out.println(adminUserIds);
         }
         user.insertOrUpdate();
         return fillUserTeams(user);

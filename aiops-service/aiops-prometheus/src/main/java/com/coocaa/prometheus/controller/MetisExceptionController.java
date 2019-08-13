@@ -30,7 +30,7 @@ public class MetisExceptionController {
     private MetisExceptionService metisExceptionService;
     @PostMapping
     @ApiOperation(value = "分页获取指标异常列表",
-            notes = "(以metrics_id为条件可以查询指定指标的历史异常记录)")
+            notes = "(以task_id为条件可以查询指定指标的历史异常记录)")
     public ResponseEntity<ResultBean> gets(@RequestBody PageRequestBean pageRequestBean) {
         return metisExceptionService.listByPage(pageRequestBean);
     }

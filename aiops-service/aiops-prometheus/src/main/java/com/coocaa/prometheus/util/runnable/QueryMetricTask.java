@@ -7,6 +7,7 @@ import com.coocaa.detector.entity.DetectorResult;
 import com.coocaa.prometheus.dto.MetisDto;
 import com.coocaa.prometheus.entity.*;
 import com.coocaa.prometheus.event.ErrorTaskPublisher;
+import com.coocaa.prometheus.util.SingletonEnum;
 import com.coocaa.prometheus.util.TaskManager;
 
 import java.util.*;
@@ -31,14 +32,14 @@ public class QueryMetricTask implements Runnable {
             if (queryRange == null) {
                 queryRange = JSON.parseObject(task.getArgs(), QueryRange.class);
             }
-            Kpi kpi = TaskManager.getKpiService().getBaseMapper().selectById(task.getMetricsId());
+            Kpi kpi = SingletonEnum.INSTANCE.getKpiService().getBaseMapper().selectById(task.getMetricsId());
             MetisDto metisDto = MetisDto.builder()
                     .viewId(kpi.getId())
                     .viewName(kpi.getName())
                     .attrId(task.getId())
                     .attrName(task.getTaskName())
                     .modelName(task.getModelName()).build();
-            Map<String, MatrixData> rangeValues = TaskManager.getPromQLService().getRangeValues(metisDto, new Date(), queryRange.getQuery(), queryRange.getSpan(), queryRange.getStep(), queryRange.getConditions());
+            Map<String, MatrixData> rangeValues = SingletonEnum.INSTANCE.getPromQLService().getRangeValues(metisDto, new Date(), queryRange.getQuery(), queryRange.getSpan(), queryRange.getStep(), queryRange.getConditions());
             Map<String, MatrixData> errorItems = new ConcurrentHashMap<>(16);
             rangeValues.forEach((key, value) -> {
                 DetectorResult.DataBean detectResult = value.getDetectResult();
@@ -56,7 +57,7 @@ public class QueryMetricTask implements Runnable {
                     .taskId(task.getId())
                     .build();
             metisException.insertOrUpdate();
-            TaskManager.getAsyncServiceTask().sendDetectResult(errorItems, task.getTeamIds(), task.getTaskName());
+            SingletonEnum.INSTANCE.getAsyncServiceTask().sendDetectResult(errorItems, task.getTeamIds(), task.getTaskName());
             // TaskManager.getTimingDataSender().send(JSONArray.toJSONString(rangeValues));
         } catch (Exception e) {
             System.out.println(e);
