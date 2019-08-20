@@ -7,8 +7,6 @@ import com.coocaa.core.log.exception.ApiResultEnum;
 import com.coocaa.core.log.response.ResponseHelper;
 import com.coocaa.core.log.response.ResultBean;
 import com.coocaa.prometheus.input.MetisExceptionInputVo;
-import com.coocaa.prometheus.mapper.MetisExceptionMapper;
-import com.coocaa.prometheus.mapper.TaskMapper;
 import com.coocaa.prometheus.service.MetisExceptionService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;

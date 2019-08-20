@@ -1,9 +1,11 @@
 package com.coocaa.user.feign;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.coocaa.common.constant.StringConstant;
 import com.coocaa.common.constant.TableConstant;
 import com.coocaa.core.tool.api.*;
 import com.coocaa.user.entity.*;
+import com.coocaa.user.mapper.TeamMapper;
 import com.coocaa.user.service.TeamService;
 import com.coocaa.user.service.UserService;
 import lombok.AllArgsConstructor;
@@ -57,5 +59,17 @@ public class UserClient implements IUserClient {
 
     public R<Set<User>> getTeamUsers(String teamIds, String connection) {
         return R.data(teamService.getTeamUsers(Arrays.asList(teamIds.split(" ")), connection));
+    }
+
+    private TeamMapper teamMapper;
+
+    @Override
+    public R<Map<Long, String>> getIdToNameMap(String teamIds) {
+        Map<Long, String> resultMap = new HashMap<>();
+        String[] split = teamIds.split(StringConstant.COMMA);
+        for (String id : split) {
+            resultMap.put(Long.valueOf(id), teamMapper.selectById(Long.valueOf(id)).getName());
+        }
+        return R.data(resultMap);
     }
 }

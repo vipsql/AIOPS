@@ -34,6 +34,7 @@ public class AsyncServiceTask {
     public ListenableFuture<String> sendDetectResult(Map<String, MatrixData> matrixDatas, String teamIds, String taskName) {
         log.info("开始发送邮件给小组成员");
         // 判断数据是否异常，异常则加入异常列表并发通知给负责人
+
         // 发给team中的所有成员
         R<Set<User>> rpcResult = userClient.getTeamUsers(teamIds, StringConstant.OR);
         if (rpcResult.isSuccess()) {

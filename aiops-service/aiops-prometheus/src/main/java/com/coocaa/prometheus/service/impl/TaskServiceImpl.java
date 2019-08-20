@@ -7,6 +7,7 @@ import com.coocaa.common.request.RequestBean;
 import com.coocaa.core.log.exception.ApiException;
 import com.coocaa.core.log.exception.ApiResultEnum;
 import com.coocaa.core.mybatis.base.BaseServiceImpl;
+import com.coocaa.core.secure.utils.SecureUtil;
 import com.coocaa.core.tool.api.R;
 import com.coocaa.core.tool.utils.DateUtil;
 import com.coocaa.core.tool.utils.SqlUtil;
@@ -57,6 +58,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         if (queryRange != null)
             task.setArgs(JSON.toJSONString(queryRange));
         task.setStatus(Constant.NumberType.GOOD_PROPERTY);
+        task.setCreateUserId(SecureUtil.getUserId());
         boolean insert = task.insertOrUpdate();
         if (insert && Constant.NumberType.ONE_PROPERTY.equals(type)) {
             QueryMetricTask queryMetricTask = new QueryMetricTask(task);
@@ -156,7 +158,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
                     .positiveOrNegative("")
                     .beginTime(metisCsvInputVo.getBegin().getTime() / 1000).endTime(metisCsvInputVo.getEnd().getTime() / 1000)
                     .source(Arrays.asList(metisCsvInputVo.getSource())).trainOrTest(Arrays.asList(metisCsvInputVo.getTrainOrTest()))
-                    .model_name(modelName)
+                    .modelName(modelName)
                     .build();
             R<Boolean> trainRpcResult = detectorClient.train(train);
         }

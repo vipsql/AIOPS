@@ -2,8 +2,7 @@ package com.coocaa.prometheus.service.impl;
 
 import com.alibaba.fastjson.*;
 import com.coocaa.common.constant.Constant;
-import com.coocaa.common.request.PageRequestBean;
-import com.coocaa.common.request.RequestUtil;
+import com.coocaa.common.request.*;
 import com.coocaa.core.log.exception.ApiException;
 import com.coocaa.core.log.exception.ApiResultEnum;
 import com.coocaa.core.log.response.ResponseHelper;
@@ -20,10 +19,13 @@ import com.coocaa.prometheus.common.PromNorm;
 import com.coocaa.prometheus.dto.MetisDto;
 import com.coocaa.prometheus.entity.*;
 import com.coocaa.prometheus.input.QueryMetricProperty;
+import com.coocaa.prometheus.mapper.KpiMapper;
 import com.coocaa.prometheus.mapper.TaskMapper;
 import com.coocaa.prometheus.output.MetricsCsvVo;
+import com.coocaa.prometheus.output.TaskOutputVo;
 import com.coocaa.prometheus.service.PromQLService;
 import com.coocaa.prometheus.util.PromQLUtil;
+import com.coocaa.user.entity.User;
 import com.coocaa.user.feign.IUserClient;
 import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
@@ -61,29 +63,87 @@ public class PromQLServiceImpl implements PromQLService {
     private TaskMapper taskMapper;
     @Autowired
     private IUserClient userClient;
+    @Autowired
+    private KpiMapper kpiMapper;
     @Value("${web.server.prometheus.apiUrl}")
     private String serverUrl;
 
     private SimpleDateFormat metisDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     @Override
-    public ResponseEntity<ResultBean> listByPage(PageRequestBean pageRequestBean) {
+    public ResponseEntity<ResultBean> listByPage(PageWithTeamRequestBean pageRequestBean) {
         RequestUtil.setDefaultPageBean(pageRequestBean);
         String conditionString = SqlUtil.getConditionString(pageRequestBean.getConditions(), pageRequestBean.getConditionConnection());
-        String teamIds = userClient.userById(SecureUtil.getUserId()).getData().getTeamIds();
-        // 增加条件 用户的TeamIds在task的Teamids下
-        conditionString = SqlUtil.addTeamIdsConditions(conditionString, teamIds);
+//        String teamIds = userClient.userById(SecureUtil.getUserId()).getData().getTeamIds();
+//        // 增加条件 用户的TeamIds在task的Teamids下
+//        conditionString = SqlUtil.addTeamIdsConditions(conditionString, teamIds);
+        conditionString = SqlUtil.addTeamIdsConditions(conditionString, pageRequestBean.getTeamConditions());
         List<Task> list = taskMapper.getPageAll(pageRequestBean.getPage() * pageRequestBean.getCount(), pageRequestBean.getCount(), conditionString, pageRequestBean.getOrderBy(), pageRequestBean.getSortType());
-        List<Task> resultList = list.stream().map(task -> {
-            task.setQueryRange(JSON.parseObject(task.getArgs(), QueryRange.class));
-            return task;
+        List<TaskOutputVo> resultList = list.stream().map(task -> {
+            TaskOutputVo vo = BeanUtil.copy(task, TaskOutputVo.class);
+            QueryRange queryRange = JSON.parseObject(task.getArgs(), QueryRange.class);
+            queryRange.setQuery(queryRange.getQuery().replaceAll("%s", ""));
+            vo.setQueryRange(queryRange);
+            CompletableFuture<Map<Long, Object>> idToNameUserMapAsync = getIdToNameMapAsync(task.getCreateUserId());
+            CompletableFuture<Map<Long, String>> idToNameTeamMapAsync = getIdToNameMapAsync(task.getTeamIds());
+//            CompletableFuture<Map<String, Set<String>>> conditionByMetricsNameAsync = getConditionByMetricsNameAsync(queryRange.getQuery().replaceAll("%s", ""), 1);
+            // 拼装指标集
+            Map<Long, Object> map = SqlUtil.map(task.getMetricsId(), kpiMapper.selectById(task.getMetricsId()).getName()).build();
+            vo.setMetricsIdToNameMap(map);
+            CompletableFuture.allOf(idToNameUserMapAsync, idToNameTeamMapAsync).join();
+            try {
+                // User
+                vo.setCreateUserIdToNameMap(idToNameUserMapAsync.get());
+                // Team
+                vo.setTeamIdToNameMap(idToNameTeamMapAsync.get());
+                // 拼装条件
+//                Map<String, Set<String>> conditionByMetricsName = conditionByMetricsNameAsync.get();
+//                if (CollectionUtil.isNotEmpty(conditionByMetricsName)) {
+//                    vo.setConditionResult(conditionByMetricsName);
+//                }
+                return vo;
+            } catch (Exception e) {
+                System.out.println(vo);
+            }
+            return vo;
         }).collect(Collectors.toList());
         Integer pageAllSize = taskMapper.getPageAllSize(conditionString);
         return ResponseHelper.OK(resultList, pageAllSize);
     }
 
+    @Async
+    CompletableFuture<Map<String, Set<String>>> getConditionByMetricsNameAsync(String metricsName, Integer minute) {
+        try {
+            return CompletableFuture.completedFuture(getConditionByMetricsName(metricsName, minute));
+        } catch (Exception e) {
+        }
+        return CompletableFuture.completedFuture(Collections.emptyMap());
+    }
+
+    @Async
+    CompletableFuture<Map<Long, String>> getIdToNameMapAsync(String teamIds) {
+        try {
+            // 拼装Team
+            if (!StringUtil.isEmpty(teamIds))
+                return CompletableFuture.completedFuture(userClient.getIdToNameMap(teamIds).getData());
+        } catch (Exception e) {
+
+        }
+        return CompletableFuture.completedFuture(Collections.emptyMap());
+    }
+
+    @Async
+    CompletableFuture<Map<Long, Object>> getIdToNameMapAsync(Long userId) {
+        if (userId != null && userId != 0) {
+            R<User> rpcResult = userClient.userById(userId);
+            if (rpcResult.isSuccess())
+                return CompletableFuture.completedFuture(SqlUtil.map(userId, rpcResult.getData().getName()).build());
+        }
+        return CompletableFuture.completedFuture(Collections.emptyMap());
+    }
+
     @Override
-    public ResponseEntity<ResultBean> getConditionByMetricsName(String metricsName, Integer minute) {
+    public Map<String, Set<String>> getConditionByMetricsName(String metricsName, Integer minute) {
         Date now = new Date();
         // 取5分钟内的指标标签和对应的值
         Date date = DateUtil.setMinutes(now, -minute);
@@ -110,7 +170,7 @@ public class PromQLServiceImpl implements PromQLService {
             });
         });
         conditionResult.put("baseLables", Sets.newHashSet(PromBaseLables.baseLables));
-        return ResponseHelper.OK(conditionResult);
+        return conditionResult;
     }
 
     @Override

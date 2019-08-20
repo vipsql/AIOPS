@@ -5,10 +5,8 @@ import com.coocaa.common.request.*;
 import com.coocaa.core.log.annotation.ApiLog;
 import com.coocaa.core.log.response.ResponseHelper;
 import com.coocaa.core.log.response.ResultBean;
-import com.coocaa.detector.feign.IDetectorClient;
 import com.coocaa.prometheus.input.MetisCsvInputVo;
 import com.coocaa.prometheus.input.TaskInputVo;
-import com.coocaa.prometheus.mapper.TaskMapper;
 import com.coocaa.prometheus.output.MetisCsvOutputVo;
 import com.coocaa.prometheus.output.MetricsCsvVo;
 import com.coocaa.prometheus.service.*;
@@ -41,7 +39,7 @@ public class TaskController {
     @PostMapping
     @ApiOperation(value = "定时任务分页列表")
     @ApiLog("定时任务分页列表")
-    public ResponseEntity<ResultBean> gets(@RequestBody PageRequestBean pageRequestBean) {
+    public ResponseEntity<ResultBean> gets(@RequestBody PageWithTeamRequestBean pageRequestBean) {
         return promQLService.listByPage(pageRequestBean);
     }
 
@@ -58,7 +56,7 @@ public class TaskController {
                     "metricsName:http_requests_total  \n" +
                     "minute:分钟单位,多少分钟内的标签及其取值  \n")
     public ResponseEntity<ResultBean> getConditionByMetricsName(@RequestParam String metricsName, @PathVariable Integer minute) {
-        return promQLService.getConditionByMetricsName(metricsName, minute);
+        return ResponseHelper.OK(promQLService.getConditionByMetricsName(metricsName, minute));
     }
 
     @PostMapping("/create/{type}")

@@ -9,12 +9,15 @@ public interface StringConstant {
     String GREATER = ">";
     String LESS = "<";
 
-    String AND ="and";
-    String OR ="or";
+    String AND = "and";
+    String AND_NOT = "and not";
+    String OR = "or";
 
     String DESC = "desc";
     String ASC = "asc";
 
     String OK = "操作成功";
     String FAIL = "操作失败";
+
+    String COMMA = ",";
 }

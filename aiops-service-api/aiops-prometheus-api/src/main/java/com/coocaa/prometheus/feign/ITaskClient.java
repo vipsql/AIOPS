@@ -4,8 +4,12 @@ import com.coocaa.core.secure.constant.AppConstant;
 import com.coocaa.core.tool.api.R;
 import com.coocaa.prometheus.entity.Task;
 import com.coocaa.prometheus.input.TaskInputVo;
+import com.sun.org.apache.xpath.internal.operations.Bool;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * @description: 远程定时任务调用Feign
@@ -23,9 +27,15 @@ public interface ITaskClient {
      *
      * @return
      */
-    @PostMapping(API_PREFIX + "/create-task")
+    @GetMapping(API_PREFIX + "/create-task")
     R<Task> createTask(@RequestBody TaskInputVo task, @RequestParam Integer type);
 
-    @PostMapping(API_PREFIX + "/remove-task")
+    @GetMapping(API_PREFIX + "/remove-task")
     R<Boolean> removeTask(@RequestParam Long taskId, @RequestParam Integer type);
+
+    @GetMapping(API_PREFIX + "/selectTaskByTeamIds")
+    R<List<Task>> selectTaskByTeamIds(@RequestParam("teamIds") String teamIds);
+
+    @GetMapping(API_PREFIX + "/deleteTeamIdFromTask")
+    R<Boolean> deleteTeamIdFromTask(@RequestParam("teamIds") String teamId);
 }

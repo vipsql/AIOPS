@@ -3,12 +3,14 @@ package com.coocaa.prometheus.util.runnable;
 import com.alibaba.fastjson.JSON;
 import com.coocaa.common.constant.Constant;
 import com.coocaa.core.tool.utils.SpringUtil;
+import com.coocaa.core.tool.utils.StringUtil;
 import com.coocaa.detector.entity.DetectorResult;
 import com.coocaa.prometheus.dto.MetisDto;
 import com.coocaa.prometheus.entity.*;
 import com.coocaa.prometheus.event.ErrorTaskPublisher;
 import com.coocaa.prometheus.util.SingletonEnum;
 import com.coocaa.prometheus.util.TaskManager;
+import org.springframework.util.CollectionUtils;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -50,6 +52,9 @@ public class QueryMetricTask implements Runnable {
                     errorItems.put(key, value);
                 }
             });
+            System.out.println(errorItems);
+            if (CollectionUtils.isEmpty(errorItems))
+                return;
             MetisException metisException = MetisException.builder()
                     .createTime(new Date())
                     .matrixDataJson(JSON.toJSONString(errorItems))
@@ -57,6 +62,8 @@ public class QueryMetricTask implements Runnable {
                     .taskId(task.getId())
                     .build();
             metisException.insertOrUpdate();
+            if (StringUtil.isEmpty(task.getTeamIds()))
+                return;
             SingletonEnum.INSTANCE.getAsyncServiceTask().sendDetectResult(errorItems, task.getTeamIds(), task.getTaskName());
             // TaskManager.getTimingDataSender().send(JSONArray.toJSONString(rangeValues));
         } catch (Exception e) {

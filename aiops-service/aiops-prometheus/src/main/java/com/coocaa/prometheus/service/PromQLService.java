@@ -2,6 +2,7 @@ package com.coocaa.prometheus.service;
 
 
 import com.coocaa.common.request.PageRequestBean;
+import com.coocaa.common.request.PageWithTeamRequestBean;
 import com.coocaa.core.log.response.ResultBean;
 import com.coocaa.prometheus.dto.MetisDto;
 import com.coocaa.prometheus.entity.*;
@@ -23,7 +24,7 @@ public interface PromQLService {
      * @param pageRequestBean
      * @return
      */
-    ResponseEntity<ResultBean> listByPage(PageRequestBean pageRequestBean);
+    ResponseEntity<ResultBean> listByPage(PageWithTeamRequestBean pageRequestBean);
 
     /**
      * 上传到metis检测异常
@@ -42,7 +43,7 @@ public interface PromQLService {
      * @param minute      分钟单位
      * @return
      */
-    ResponseEntity<ResultBean> getConditionByMetricsName(String metricsName, Integer minute);
+    Map<String, Set<String>> getConditionByMetricsName(String metricsName, Integer minute);
 
     /**
      * 根据指标名和条件获取相应数据并进行预测,返回最新点是否异常的预测结果值

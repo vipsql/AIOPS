@@ -8,8 +8,7 @@ import com.coocaa.user.entity.UserInfo;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * User Feign接口类
@@ -52,4 +51,6 @@ public interface IUserClient {
     @GetMapping(API_PREFIX + "/getTeamUsers")
     R<Set<User>> getTeamUsers(@RequestParam("teamIds") String teamIds, @RequestParam("connection") String connection);
 
+    @GetMapping(API_PREFIX + "/getIdToNameMap")
+    R<Map<Long, String>> getIdToNameMap(@RequestParam("teamIds") String teamIds);
 }

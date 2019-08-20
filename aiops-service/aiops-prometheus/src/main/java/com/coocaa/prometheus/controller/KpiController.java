@@ -3,9 +3,12 @@ package com.coocaa.prometheus.controller;
 import com.coocaa.common.request.*;
 import com.coocaa.core.log.response.ResponseHelper;
 import com.coocaa.core.log.response.ResultBean;
+import com.coocaa.core.tool.utils.BeanUtil;
 import com.coocaa.core.tool.utils.SqlUtil;
 import com.coocaa.prometheus.entity.Kpi;
 import com.coocaa.prometheus.mapper.KpiMapper;
+import com.coocaa.prometheus.output.KpiOutputVo;
+import com.coocaa.prometheus.output.TaskOutputVo;
 import com.coocaa.prometheus.service.KpiService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -14,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @description: 指标清单控制层
@@ -41,8 +45,13 @@ public class KpiController {
         RequestUtil.setDefaultPageBean(pageRequestBean);
         String conditionString = SqlUtil.getConditionString(pageRequestBean.getConditions(), pageRequestBean.getConditionConnection());
         List<Kpi> list = kpiListingMapper.getPageAll(pageRequestBean.getPage() * pageRequestBean.getCount(), pageRequestBean.getCount(), conditionString, pageRequestBean.getOrderBy(), pageRequestBean.getSortType());
+        List<KpiOutputVo> resultList = list.stream().map(kpi -> {
+            KpiOutputVo vo = BeanUtil.copy(kpi, KpiOutputVo.class);
+            vo.setQueryPromExpression(kpi.getPromExpression().replaceAll("%s", ""));
+            return vo;
+        }).collect(Collectors.toList());
         Integer pageAllSize = kpiListingMapper.getPageAllSize(conditionString);
-        return ResponseHelper.OK(list, pageAllSize);
+        return ResponseHelper.OK(resultList, pageAllSize);
     }
 
     @DeleteMapping("/delete")

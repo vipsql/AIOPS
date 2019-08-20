@@ -11,11 +11,15 @@ import com.coocaa.core.log.response.ResultBean;
 import com.coocaa.core.mybatis.base.BaseServiceImpl;
 import com.coocaa.core.secure.AiOpsUser;
 import com.coocaa.core.secure.utils.SecureUtil;
+import com.coocaa.core.tool.api.R;
 import com.coocaa.core.tool.utils.*;
 import com.coocaa.prometheus.entity.MetisException;
+import com.coocaa.prometheus.entity.Task;
 import com.coocaa.prometheus.input.MetisExceptionInputVo;
 import com.coocaa.prometheus.mapper.MetisExceptionMapper;
 import com.coocaa.prometheus.mapper.TaskMapper;
+import com.coocaa.prometheus.output.MetisExceptionOutputVo;
+import com.coocaa.prometheus.output.TaskOutputVo;
 import com.coocaa.prometheus.service.MetisExceptionService;
 import com.coocaa.user.entity.User;
 import com.coocaa.user.feign.IUserClient;
@@ -54,8 +58,21 @@ public class MetisExceptionServiceImpl extends BaseServiceImpl<MetisExceptionMap
         // 增加条件 在用户管理的task下的所有异常列表
         conditionString = SqlUtil.addConditon(conditionString, TableConstant.TASK.TASK_ID, "IN", StringUtil.addBrackets(taskIdConditionStr));
         List<MetisException> list = metisExceptionMapper.getPageAll(pageRequestBean.getPage() * pageRequestBean.getCount(), pageRequestBean.getCount(), conditionString, pageRequestBean.getOrderBy(), pageRequestBean.getSortType());
+        List<MetisExceptionOutputVo> resultList = list.stream().map(exception -> {
+            MetisExceptionOutputVo vo = BeanUtil.copy(exception, MetisExceptionOutputVo.class);
+            Task task = taskMapper.selectById(exception.getTaskId());
+            vo.setTaskToStringMap(SqlUtil.map(exception.getTaskId(), task.getTaskName()).build());
+            if (exception.getRecentUserId() == null || exception.getRecentUserId() == 0)
+                return vo;
+            else {
+                R<User> rpcResult = userClient.userById(exception.getRecentUserId());
+                if (rpcResult.getData() != null)
+                    vo.setRecentUserIdMap(SqlUtil.map(exception.getRecentUserId(), rpcResult.getData().getName()).build());
+            }
+            return vo;
+        }).collect(Collectors.toList());
         Integer pageAllSize = metisExceptionMapper.getPageAllSize(conditionString);
-        return ResponseHelper.OK(list, pageAllSize);
+        return ResponseHelper.OK(resultList, pageAllSize);
     }
 
     @Override

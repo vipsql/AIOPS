@@ -1,17 +1,15 @@
 package com.coocaa.core.tool.utils;
 
-import com.coocaa.common.constant.StringConstant;
-import com.coocaa.common.constant.TableConstant;
+import com.coocaa.common.constant.*;
 import com.coocaa.common.request.PageRequestBean;
 import com.coocaa.common.request.RequestBean;
 import com.google.common.collect.ImmutableMap;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * @program: intelligent_maintenance
  * @description: 数据库工具类
  * @author: dongyang_wu
  * @create: 2019-07-30 16:48
@@ -19,6 +17,10 @@ import java.util.concurrent.atomic.AtomicReference;
 public class SqlUtil {
     public static ImmutableMap.Builder<String, Object> map(String query, String queryString) {
         return ImmutableMap.<String, Object>builder().put(query, queryString);
+    }
+
+    public static ImmutableMap.Builder<Long, Object> map(Long query, String queryString) {
+        return ImmutableMap.<Long, Object>builder().put(query, queryString);
     }
 
     public static ImmutableMap.Builder<String, Object> map(String query, Object queryString) {
@@ -86,5 +88,23 @@ public class SqlUtil {
         String teamIdOrStr = String.join(" OR ", teamIdList);
         sql.append(teamIdOrStr).append(",").append(TableConstant.USER.TEAM_IDS).append(") ");
         return sql.toString();
+    }
+
+    /**
+     * Team 与或非查询
+     */
+    public static String addTeamIdsConditions(String conditions, List<PageRequestBean.PageTeamRequestItem> teamConditions) {
+        if (CollectionUtils.isEmpty(teamConditions))
+            return conditions;
+        StringBuffer sql = new StringBuffer();
+        String teamConditionString;
+        teamConditions.stream().forEach(condition ->
+                sql.append(condition.getConnection()).append(String.format(TableConstant.TEAM_CONDITON, condition.getQueryString())));
+        if (StringUtils.isEmpty(conditions)) {
+            teamConditionString = " LENGTH(team_ids)>0 " + sql.toString();
+        } else {
+            teamConditionString = conditions + " AND LENGTH(team_ids)>0 " + sql.toString();
+        }
+        return teamConditionString;
     }
 }

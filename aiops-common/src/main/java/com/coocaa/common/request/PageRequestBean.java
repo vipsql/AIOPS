@@ -30,4 +30,13 @@ public class PageRequestBean {
         private String connection;
         private String queryString;
     }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class PageTeamRequestItem {
+        private String connection;
+        private String queryString;
+    }
 }

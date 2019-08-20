@@ -12,6 +12,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -37,9 +38,10 @@ public class UserController {
 
     @PostMapping
     @ApiOperation(value = "分页获取user列表,响应code为总数")
-    ResponseEntity<ResultBean> gets(@RequestBody PageRequestBean pageRequestBean) {
+    ResponseEntity<ResultBean> gets(@RequestBody PageWithTeamRequestBean pageRequestBean) {
         RequestUtil.setDefaultPageBean(pageRequestBean);
         String conditionString = SqlUtil.getConditionString(pageRequestBean.getConditions(), pageRequestBean.getConditionConnection());
+        conditionString = SqlUtil.addTeamIdsConditions(conditionString, pageRequestBean.getTeamConditions());
         List<User> list = userMapper.getPageAll(pageRequestBean.getPage() * pageRequestBean.getCount(), pageRequestBean.getCount(), conditionString, pageRequestBean.getOrderBy(), pageRequestBean.getSortType());
         list.forEach(user -> userService.fillUserTeams(user));
         Integer pageAllSize = userMapper.getPageAllSize(conditionString);

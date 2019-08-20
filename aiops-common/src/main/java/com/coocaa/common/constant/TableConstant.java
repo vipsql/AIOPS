@@ -37,6 +37,11 @@ public interface TableConstant {
     String SELECT_ALL = "SELECT * FROM ";
     String WHERE = " WHERE ";
 
+    /**
+     * Team 与或非常量
+     */
+    String TEAM_CONDITON = " FIND_IN_SET(%s,team_ids) ";
+
     interface TABLE {
         String TABLE_TASK = "task";
         String TABLE_USER = "user";

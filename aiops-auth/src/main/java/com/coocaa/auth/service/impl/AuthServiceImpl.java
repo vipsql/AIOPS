@@ -28,6 +28,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @description:
@@ -56,6 +57,9 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public ResponseEntity<ResultBean> tokenByLdap(String account, String password) {
+        if (!ldapUtil.validateUser(account, password)) {
+            throw new ApiException(ApiResultEnum.USERNAME_OR_PASSWORD_ERROR);
+        }
         // 判断缓存中是否存在
         Object o = redisUtil.get(String.format(RedisConstant.AUTH_TOKEN.TOKEN_PREFIX, account));
         if (!ObjectUtil.isEmpty(o)) {

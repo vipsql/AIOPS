@@ -49,7 +49,7 @@ public interface AppConstant {
     /**
      * 定时任务模块名称
      */
-    String APPLICATION_TASK_NAME = APPLICATION_NAME_PREFIX + "dataManipulation";
+    String APPLICATION_TASK_NAME = APPLICATION_NAME_PREFIX + "prometheus";
     /**
      * 开发环境
      */

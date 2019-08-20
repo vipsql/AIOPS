@@ -35,4 +35,18 @@ public class RequestUtil {
         }
     }
 
+    public static void setDefaultPageBean(PageWithTeamRequestBean pageRequestBean) {
+        if (pageRequestBean.getPage() == null) {
+            pageRequestBean.setPage(0);
+        }
+        if (pageRequestBean.getCount() == null || pageRequestBean.getCount() == 0) {
+            pageRequestBean.setCount(5);
+        }
+        if (pageRequestBean.getOrderBy() == null) {
+            pageRequestBean.setOrderBy(TableConstant.ID);
+        }
+        if (pageRequestBean.getSortType() == null) {
+            pageRequestBean.setSortType(StringConstant.DESC);
+        }
+    }
 }

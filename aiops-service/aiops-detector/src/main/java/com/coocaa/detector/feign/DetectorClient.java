@@ -39,8 +39,8 @@ public class DetectorClient implements IDetectorClient {
 
     @Override
     public R<Boolean> train(Train train) {
-        boolean b = metisService.train(train);
-        if (b) {
+        String b = metisService.train(train);
+        if (!b.equals("数据错误")) {
             return R.success("模型成功提交训练", true);
         } else {
             return R.fail(500, "提交模型训练失败,请检测所所选范围内是否有数据，或者是否都拥有正负样本数据", false);

@@ -13,7 +13,9 @@
 
 3.对接prometheus服务----指标集和指标接口
 # 获取认证token
+
 1. 通过**授权服务**获取token
+
 2.具体参数如下：
 
   ![image.png](https://upload-images.jianshu.io/upload_images/13364130-a2d89d64aeccf84f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)

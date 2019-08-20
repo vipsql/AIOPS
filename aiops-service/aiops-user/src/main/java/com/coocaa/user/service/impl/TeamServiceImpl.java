@@ -10,7 +10,10 @@ import com.coocaa.core.log.response.ResponseHelper;
 import com.coocaa.core.log.response.ResultBean;
 import com.coocaa.core.mybatis.base.BaseServiceImpl;
 import com.coocaa.core.secure.utils.SecureUtil;
+import com.coocaa.core.tool.api.R;
 import com.coocaa.core.tool.utils.*;
+import com.coocaa.prometheus.entity.Task;
+import com.coocaa.prometheus.feign.ITaskClient;
 import com.coocaa.user.entity.Team;
 import com.coocaa.user.entity.User;
 import com.coocaa.user.input.TeamInputVo;
@@ -38,6 +41,7 @@ import java.util.stream.Collectors;
 public class TeamServiceImpl extends BaseServiceImpl<TeamMapper, Team> implements TeamService {
     private UserMapper userMapper;
     private TeamMapper teamMapper;
+    private ITaskClient taskClient;
 
     @Override
     public ResponseEntity<ResultBean> listByPage(PageRequestBean pageRequestBean) {
@@ -147,9 +151,14 @@ public class TeamServiceImpl extends BaseServiceImpl<TeamMapper, Team> implement
                         return;
                     // 遍历user删除指定的team_id
                     String replace = StringUtil.getCommaStr(user.getTeamIds()).replace(StringUtil.getCommaStr(team.getId()), ",");
-                    user.setTeamIds(replace.substring(1, replace.lastIndexOf(",")));
+                    if (replace.length() == 1) {
+                        user.setTeamIds("");
+                    } else {
+                        user.setTeamIds(replace.substring(1, replace.lastIndexOf(",")));
+                    }
                     user.updateById();
                 });
+                taskClient.deleteTeamIdFromTask(team.getId() + "");
                 team.deleteById();
             });
         });

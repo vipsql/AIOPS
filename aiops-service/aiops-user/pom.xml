@@ -26,6 +26,11 @@
             <artifactId>aiops-user-api</artifactId>
             <version>${aiops.project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.coocaa</groupId>
+            <artifactId>aiops-prometheus-api</artifactId>
+            <version>${aiops.project.version}</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

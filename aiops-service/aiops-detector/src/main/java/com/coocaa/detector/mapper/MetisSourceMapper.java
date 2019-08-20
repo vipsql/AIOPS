@@ -1,7 +1,12 @@
 package com.coocaa.detector.mapper;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.coocaa.detector.entity.Model;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
+
+import java.util.List;
+
 
 /**
  * @author 陈煜坤
@@ -22,5 +27,11 @@ public interface MetisSourceMapper {
 
     @Select("select status from train_task where model_name=CONCAT(#{0},'_model')")
     String getModelStatus(String str);
+
+    @Select("select sample_num,start_time,end_time from train_task")
+    List<Model> getAllModelTime();
+
+    @Select("select * from train_task")
+    List<Model> getAllModel(Page page);
 
 }
