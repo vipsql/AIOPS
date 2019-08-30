@@ -10,9 +10,7 @@ import com.coocaa.core.log.response.ResponseHelper;
 import com.coocaa.core.log.response.ResultBean;
 import com.coocaa.core.mybatis.base.BaseServiceImpl;
 import com.coocaa.core.secure.utils.SecureUtil;
-import com.coocaa.core.tool.api.R;
 import com.coocaa.core.tool.utils.*;
-import com.coocaa.prometheus.entity.Task;
 import com.coocaa.prometheus.feign.ITaskClient;
 import com.coocaa.user.entity.Team;
 import com.coocaa.user.entity.User;
@@ -26,6 +24,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -48,17 +47,96 @@ public class TeamServiceImpl extends BaseServiceImpl<TeamMapper, Team> implement
         RequestUtil.setDefaultPageBean(pageRequestBean);
         String conditionString = SqlUtil.getConditionString(pageRequestBean.getConditions(), pageRequestBean.getConditionConnection());
         List<Team> list = teamMapper.getPageAll(pageRequestBean.getPage() * pageRequestBean.getCount(), pageRequestBean.getCount(), conditionString, pageRequestBean.getOrderBy(), pageRequestBean.getSortType());
-        List<TeamOutputVo> resultList = list.stream().map(team -> {
-            TeamOutputVo teamOutputVo = new TeamOutputVo();
-            BeanUtils.copyProperties(team, teamOutputVo);
-            List<User> users = userMapper.selectByTeamIdPage(team.getId(), 0, 5);
-            Integer size = userMapper.selectByTeamIdSize(team.getId());
-            teamOutputVo.setUserList(users);
-            teamOutputVo.setUserListTotal(size);
-            return teamOutputVo;
-        }).collect(Collectors.toList());
+        List<TeamOutputVo> resultList = list.stream().map(this::fillUsers).collect(Collectors.toList());
         Integer pageAllSize = teamMapper.getPageAllSize(conditionString);
         return ResponseHelper.OK(resultList, pageAllSize);
+    }
+
+    @Override
+    public ResponseEntity<ResultBean> listByPageWithUserCondition(PageRequestBean pageRequestBean) {
+        RequestUtil.setDefaultPageBean(pageRequestBean);
+        List<PageRequestBean.PageRequestItem> conditions = pageRequestBean.getConditions();
+        String conditionConnection = pageRequestBean.getConditionConnection();
+        String[] connections = conditionConnection.split(" ");
+        List<Set<String>> teamIdsList = new ArrayList<>();
+        int i;
+        for (i = 0; i < conditions.size(); i++) {
+            StringBuffer sql = new StringBuffer();
+            SqlUtil.addCondition(sql, conditions.get(i), null);
+            List<String> teamIdsStrings = userMapper.getAllTeamIdsString(sql.toString());
+            Set<String> teams = new HashSet<>();
+            if (CollectionUtil.isEmpty(teamIdsStrings)) {
+                teamIdsList.add(teams);
+                continue;
+            }
+            teamIdsStrings.stream().forEach(teamIdsString -> {
+                String[] split = teamIdsString.split(StringConstant.COMMA);
+                teams.addAll(Arrays.asList(split));
+            });
+            teamIdsList.add(teams);
+        }
+        Set<String> allTeamIds = teamMapper.selectAllTeamIds();
+        // 每个user的team_ids按与或非求交集并集
+        Set<String> realTeamIds = doWithCondition(allTeamIds, teamIdsList, connections);
+        if (CollectionUtil.isNotEmpty(realTeamIds)) {
+            String oriCondition = StringUtil.addBrackets(String.join(",", realTeamIds));
+            String condition = SqlUtil.addLimitCondition(oriCondition, pageRequestBean.getPage(), pageRequestBean.getCount());
+            List<TeamOutputVo> resultList = teamMapper.selectByIdInUser(condition).stream().map(this::fillUsers).collect(Collectors.toList());
+            Integer pageAllSize = teamMapper.selectByIdInUserSize(oriCondition);
+            return ResponseHelper.OK(resultList, pageAllSize);
+        }
+        return ResponseHelper.OK(Collections.emptyList(), 0);
+    }
+
+    private Set<String> doWithCondition(Set<String> allTeamIds, List<Set<String>> teamIdsList, String[] connections) {
+        if (teamIdsList.size() == 1) {
+            if (StringConstant.NOT.equalsIgnoreCase(connections[0])) {
+                allTeamIds.removeAll(teamIdsList.get(0));
+                return allTeamIds;
+            }
+            return teamIdsList.get(0);
+        }
+        int i;
+        Set<String> resultSet = new HashSet<>(allTeamIds);
+        Set<String> firstTemp;
+        Set<String> secondTemp;
+        for (i = 0; i < teamIdsList.size() - 1; i++) {
+            switch (connections[i]) {
+                case StringConstant.AND:
+                    if (i != 0 && StringConstant.NOT.equalsIgnoreCase(connections[i - 1])) {
+                        secondTemp = teamIdsList.get(i + 1);
+                        resultSet.retainAll(secondTemp);
+                    } else {
+                        firstTemp = teamIdsList.get(i);
+                        secondTemp = teamIdsList.get(i + 1);
+                        // 交集
+                        firstTemp.retainAll(secondTemp);
+                        resultSet.retainAll(firstTemp);
+                    }
+                    break;
+                case StringConstant.OR:
+                    if (i != 0 && StringConstant.NOT.equalsIgnoreCase(connections[i - 1])) {
+                        secondTemp = teamIdsList.get(i + 1);
+                        resultSet.addAll(secondTemp);
+                    } else {
+                        firstTemp = teamIdsList.get(i);
+                        secondTemp = teamIdsList.get(i + 1);
+                        // 并集
+                        firstTemp.addAll(secondTemp);
+                        resultSet.addAll(firstTemp);
+                    }
+                    break;
+                case StringConstant.NOT:
+                    Set<String> allTeamIdsTemp = new HashSet<>(allTeamIds);
+                    secondTemp = teamIdsList.get(i + 1);
+                    allTeamIdsTemp.removeAll(secondTemp);
+                    resultSet.retainAll(allTeamIdsTemp);
+                    break;
+                default:
+                    break;
+            }
+        }
+        return resultSet;
     }
 
     @Override
@@ -73,6 +151,12 @@ public class TeamServiceImpl extends BaseServiceImpl<TeamMapper, Team> implement
             if (!currentUserId.equals(adminUserId)) {
                 throw new ApiException(ApiResultEnum.USER_NOT_TEAM_ADMIN);
             }
+        }
+        // 添加判断
+        else {
+            Integer size = teamMapper.selectCount(new QueryWrapper<Team>().eq(TableConstant.TEAM.NAME, teamInputVo.getName()));
+            if (size > 0)
+                throw new ApiException(ApiResultEnum.NAME_REPEAT_ERROR);
         }
         Team team = new Team();
         BeanUtils.copyProperties(teamInputVo, team);
@@ -110,13 +194,7 @@ public class TeamServiceImpl extends BaseServiceImpl<TeamMapper, Team> implement
                 user.updateById();
             });
         }
-        TeamOutputVo teamOutputVo = new TeamOutputVo();
-        BeanUtils.copyProperties(team, teamOutputVo);
-        List<User> users = userMapper.selectByTeamIdPage(team.getId(), 0, 5);
-        Integer size = userMapper.selectByTeamIdSize(team.getId());
-        teamOutputVo.setUserList(users);
-        teamOutputVo.setUserListTotal(size);
-        return teamOutputVo;
+        return fillUsers(team);
     }
 
     @Override
@@ -162,5 +240,17 @@ public class TeamServiceImpl extends BaseServiceImpl<TeamMapper, Team> implement
                 team.deleteById();
             });
         });
+    }
+
+    private TeamOutputVo fillUsers(Team team) {
+        TeamOutputVo teamOutputVo = BeanUtil.copy(team, TeamOutputVo.class);
+        List<User> users = userMapper.selectByTeamIdPage(team.getId(), 0, 10);
+        Integer size = userMapper.selectByTeamIdSize(team.getId());
+        teamOutputVo.setUserList(users);
+        teamOutputVo.setUserListTotal(size);
+        List<User> adminUser = users.stream().filter(user -> user.getId().equals(team.getAdminUserId())).collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(adminUser))
+            teamOutputVo.setAdminUser(adminUser.get(0));
+        return teamOutputVo;
     }
 }

@@ -1,19 +1,15 @@
 package com.coocaa.prometheus.service;
 
-import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.coocaa.common.request.RequestBean;
 import com.coocaa.core.mybatis.base.BaseService;
+import com.coocaa.prometheus.entity.MatrixData;
 import com.coocaa.prometheus.entity.Task;
 import com.coocaa.prometheus.input.MetisCsvInputVo;
 import com.coocaa.prometheus.input.TaskInputVo;
 import com.coocaa.prometheus.output.MetisCsvOutputVo;
 import com.coocaa.prometheus.output.MetricsCsvVo;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -26,12 +22,12 @@ public interface TaskService extends BaseService<Task> {
     /**
      * 新增或更新定时任务
      */
-    Task createQueryMetricsTask(TaskInputVo taskInputVo,Integer type);
+    Task createQueryMetricsTask(TaskInputVo taskInputVo, Integer type);
 
     /**
-     * 停止、删除或禁用定时任务
+     * 停止、删除、禁用或启用定时任务
      */
-    Boolean removeQueryMetricsTask(RequestBean requestbean, Integer type);
+    Boolean changeQueryMetricsTask(RequestBean requestbean, Integer type);
 
     /**
      * 启动所有定时任务
@@ -64,5 +60,13 @@ public interface TaskService extends BaseService<Task> {
      * 重新启动定时任务
      */
     void restartTask(RequestBean requestbean);
+
+    /**
+     * 将指标传入Metis进行检测
+     *
+     * @param task
+     * @return
+     */
+    Map<String, MatrixData> detectByMetis(Task task, Date date) throws ExecutionException, InterruptedException;
 
 }

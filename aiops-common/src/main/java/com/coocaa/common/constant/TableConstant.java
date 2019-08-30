@@ -12,7 +12,7 @@ public interface TableConstant {
     String GET_PAGE_ALL = "<script>" + TableConstant.SELECT_ALL;
     String GET_PAGE_ALL_CONDITION = TableConstant.LOGIC_EXIST_STR +
             "<if test='conditions!=null '>" +
-            "and ${conditions} " +
+            " and ( ${conditions} ) " +
             "</if>" +
             "ORDER BY ${orderBy} ${sortType} " +
             "limit #{page},#{count}" +
@@ -21,7 +21,12 @@ public interface TableConstant {
     String GET_PAGE_ALL_SIZE = "<script>" + TableConstant.SELECT_COUNT;
     String GET_PAGE_ALL_SIZE_CONDITION = TableConstant.LOGIC_EXIST_STR +
             "<if test='conditions!=null '>" +
-            "and ${conditions} " +
+            " and ( ${conditions} ) " +
+            "</if></script>";
+
+    String GET_ALL_CONDITION = TableConstant.LOGIC_EXIST_STR +
+            "<if test='conditions!=null '>" +
+            " and ( ${conditions} ) " +
             "</if></script>";
     /**
      * 用于分页显示基本脚本常量结束
@@ -35,8 +40,12 @@ public interface TableConstant {
     String LOGIC_EXIST = TableConstant.LOGIC + " = 0 ";
     String SELECT_COUNT = "SELECT COUNT(*) FROM ";
     String SELECT_ALL = "SELECT * FROM ";
+    String SELECT_ID_ALL = "SELECT id FROM ";
     String WHERE = " WHERE ";
-
+    /**
+     * 时间常量
+     */
+    String CREATE_TIME = "create_time";
     /**
      * Team 与或非常量
      */
@@ -49,6 +58,7 @@ public interface TableConstant {
         String TABLE_METRICS = "metrics";
         String TABLE_METIS_EXCEPTION = "metis_exception";
         String TABLE_KPI = "kpi";
+        String LOG_API = "log_api";
     }
 
     interface USER {
@@ -58,10 +68,18 @@ public interface TableConstant {
     }
 
     interface TASK {
+        Integer START_PAGE = 0;
+        Integer START_COUNT = 5;
+        Integer START_ERROR_FLAG_NUMBER = 100;
         String TASK_ID = "task_id";
+        String TASK_NAME = "task_name";
         String METRICS_ID = "metrics_id";
+        String IS_UP = "is_up";
+        String ERROR_NUMBER = "error_number";
+        String INSTANCE = "instance";
     }
 
     interface TEAM {
+        String NAME = "name";
     }
 }

@@ -9,16 +9,10 @@ import java.util.List;
  * @author: dongyang_wu
  * @create: 2019-08-06 09:58
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class PageWithTeamRequestBean {
-    private Integer page = 0;
-    private Integer count = 5;
-    private String conditionConnection;
-    private String orderBy;
-    private String sortType;
-    private List<PageRequestBean.PageRequestItem> conditions;
+public class PageWithTeamRequestBean extends PageRequestBean {
     private List<PageRequestBean.PageTeamRequestItem> teamConditions;
 }

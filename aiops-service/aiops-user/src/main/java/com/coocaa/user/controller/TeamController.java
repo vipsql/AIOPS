@@ -53,8 +53,12 @@ public class TeamController {
                     "    }\n" +
                     "  ]\n" +
                     "}  \n")
-    public ResponseEntity<ResultBean> gets(@RequestBody PageRequestBean pageRequestBean) {
-        return teamService.listByPage(pageRequestBean);
+    public ResponseEntity<ResultBean> gets(@RequestBody PageRequestBean pageRequestBean, @RequestParam Integer type) {
+        if (type == 0) {
+            return teamService.listByPage(pageRequestBean);
+        } else {
+            return teamService.listByPageWithUserCondition(pageRequestBean);
+        }
     }
 
     @PostMapping("/create")

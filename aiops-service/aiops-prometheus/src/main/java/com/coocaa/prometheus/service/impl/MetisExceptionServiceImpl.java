@@ -23,6 +23,7 @@ import com.coocaa.prometheus.output.TaskOutputVo;
 import com.coocaa.prometheus.service.MetisExceptionService;
 import com.coocaa.user.entity.User;
 import com.coocaa.user.feign.IUserClient;
+import com.google.common.collect.ImmutableMap;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -62,12 +63,19 @@ public class MetisExceptionServiceImpl extends BaseServiceImpl<MetisExceptionMap
             MetisExceptionOutputVo vo = BeanUtil.copy(exception, MetisExceptionOutputVo.class);
             Task task = taskMapper.selectById(exception.getTaskId());
             vo.setTaskToStringMap(SqlUtil.map(exception.getTaskId(), task.getTaskName()).build());
+            vo.setMatrixDataJsonMap(JSON.parseObject(exception.getMatrixDataJson(), Map.class));
             if (exception.getRecentUserId() == null || exception.getRecentUserId() == 0)
                 return vo;
             else {
                 R<User> rpcResult = userClient.userById(exception.getRecentUserId());
-                if (rpcResult.getData() != null)
-                    vo.setRecentUserIdMap(SqlUtil.map(exception.getRecentUserId(), rpcResult.getData().getName()).build());
+                if (rpcResult.getData() != null) {
+                    ConcurrentHashMap<String, Map<String, String>> userToReasonMap = JSON.parseObject(exception.getUserToReasonJson(), (Type) ConcurrentHashMap.class);
+                    Map<String, Map<String, String>> recentUserIdMap = new ConcurrentHashMap<>();
+                    recentUserIdMap.put(rpcResult.getData().getId() + " " + rpcResult.getData().getName(), userToReasonMap.get(rpcResult.getData().getName()));
+                    vo.setRecentUserReason(recentUserIdMap);
+                    userToReasonMap.remove(rpcResult.getData().getName());
+                    vo.setUserToReasonJsonMap(userToReasonMap);
+                }
             }
             return vo;
         }).collect(Collectors.toList());
@@ -85,27 +93,29 @@ public class MetisExceptionServiceImpl extends BaseServiceImpl<MetisExceptionMap
         AiOpsUser user = SecureUtil.getUser();
         metisException.setRecentUserId(user.getUserId());
         String userName = user.getUserName();
-        ConcurrentHashMap<String, List<String>> userToReasonMap;
+        ConcurrentHashMap<String, Map<String, String>> userToReasonMap;
+        String currentDate = new Date().getTime() / 1000 + "";
         // 不含JSON
         if (StringUtils.isEmpty(userToReasonJson)) {
             userToReasonMap = new ConcurrentHashMap<>();
-            userToReasonMap.put(userName, Arrays.asList(metisExceptionInputVo.getReason()));
+            userToReasonMap.put(userName, SqlUtil.mapWithString(currentDate, metisExceptionInputVo.getReason()).build());
         }
         // 含JSON
         else {
             userToReasonMap = JSON.parseObject(userToReasonJson, (Type) ConcurrentHashMap.class);
             // 含相应用户的key
             if (userToReasonMap.containsKey(userName)) {
-                List<String> userReasons = userToReasonMap.get(userName);
-                userReasons.add(metisExceptionInputVo.getReason());
+                Map<String, String> userReasons = userToReasonMap.get(userName);
+                userReasons.put(currentDate, metisExceptionInputVo.getReason());
                 if (userReasons.size() > 10) {
-                    userReasons.remove(0);
+                    String firstKey = MapUtil.getFirstOrNull(userReasons);
+                    userToReasonMap.remove(firstKey);
                 }
                 userToReasonMap.put(userName, userReasons);
             }
             // 不含相应用户的key
             else {
-                userToReasonMap.put(userName, Arrays.asList(metisExceptionInputVo.getReason()));
+                userToReasonMap.put(userName, SqlUtil.mapWithString(currentDate, metisExceptionInputVo.getReason()).build());
             }
 
             // 判断是否应该删除

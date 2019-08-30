@@ -1,7 +1,6 @@
 package com.coocaa.common.constant;
 
 /**
- * @program: intelligent_maintenance
  * @description: Redis常量
  * @author: dongyang_wu
  * @create: 2019-07-31 09:09

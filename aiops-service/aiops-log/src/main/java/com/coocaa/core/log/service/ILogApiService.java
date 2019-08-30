@@ -24,5 +24,5 @@ import com.coocaa.core.log.model.LogApi;
  * @author dongyang_wu
  */
 public interface ILogApiService extends IService<LogApi> {
-
+    void deleteLogs();
 }

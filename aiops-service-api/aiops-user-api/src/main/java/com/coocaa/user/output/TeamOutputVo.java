@@ -3,8 +3,7 @@ package com.coocaa.user.output;
 import com.coocaa.user.entity.User;
 import lombok.*;
 
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * @description: Team输出实体类
@@ -18,7 +17,7 @@ import java.util.List;
 public class TeamOutputVo {
     private Long id;
     private String name;
-    private Long adminUserId;
+    private User adminUser;
     private Integer userListTotal;
     private List<User> userList;
     private Date createTime;

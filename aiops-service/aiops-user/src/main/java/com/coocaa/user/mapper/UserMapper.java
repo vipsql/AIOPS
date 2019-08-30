@@ -19,6 +19,8 @@ public interface UserMapper extends BaseMapper<User> {
     String GET_PAGE_ALL = TableConstant.GET_PAGE_ALL + TableConstant.TABLE.TABLE_USER + TableConstant.GET_PAGE_ALL_CONDITION;
     String GET_PAGE_ALL_SIZE = TableConstant.GET_PAGE_ALL_SIZE + TableConstant.TABLE.TABLE_USER + TableConstant.GET_PAGE_ALL_SIZE_CONDITION;
 
+    String GET_ALL_TEAMIDS_STRING = "<script> SELECT " + TableConstant.USER.TEAM_IDS + " FROM " + TableConstant.TABLE.TABLE_USER + TableConstant.GET_ALL_CONDITION;
+
     @Select("SELECT * FROM `user` WHERE id = #{id}")
     User getUser(Long id);
 
@@ -36,6 +38,10 @@ public interface UserMapper extends BaseMapper<User> {
     // 分页获取数据开始
     @Select(value = GET_PAGE_ALL)
     List<User> getPageAll(Integer page, Integer count, String conditions, String orderBy, String sortType);
+
+    // 获取用户列表的所有Team_ids
+    @Select(value = GET_ALL_TEAMIDS_STRING)
+    List<String> getAllTeamIdsString(@Param("conditions") String conditions);
 
     @Select(value = GET_PAGE_ALL_SIZE)
     Integer getPageAllSize(@Param("conditions") String conditions);

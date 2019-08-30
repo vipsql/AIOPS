@@ -17,6 +17,9 @@
         <result column="metrics_id" property="metricsId"/>
         <result column="model_name" property="modelName"/>
         <result column="team_ids" property="teamIds"/>
+        <result column="is_up" property="isUp"/>
+        <result column="error_number" property="errorNumber"/>
+        <result column="instance" property="instance"/>
         <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
     </resultMap>

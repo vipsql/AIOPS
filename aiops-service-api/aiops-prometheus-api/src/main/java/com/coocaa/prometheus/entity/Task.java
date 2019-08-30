@@ -77,6 +77,9 @@ public class Task extends Model<Task> {
      * team id集合
      */
     private String teamIds;
+    private Byte isUp;
+    private Integer errorNumber;
+    private String instance;
     @TableField(exist = false)
     private QueryRange queryRange;
     @TableLogic

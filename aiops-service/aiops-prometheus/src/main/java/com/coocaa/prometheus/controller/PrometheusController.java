@@ -62,11 +62,6 @@ public class PrometheusController {
     }
 
 
-
-
-
-
-
     // 以下方法已废弃
     @PostMapping("/config/{type}/{mode}")
     @ApiOperation(value = "添加、修改或删除Prometheus需要监控的机器服务(instance不可重复)",

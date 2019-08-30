@@ -33,6 +33,8 @@ public enum ApiResultEnum {
     VERTIFY_EXPIRE(30002, "登录验证码过期"),
     USER_SAVE_ERROR(30003, "用户存储失败"),
     FUNCTION_PARAMETER_SCOPE_ERROR(40000, "接口参数范围错误"),
+    NAME_REPEAT_ERROR(50000, "Name列不能重复"),
+    CYCLE_JOB_ARGS_ERROR(60000, "定时任务无法获取指定指标数据(请检查参数条件是否正确)"),
     MESSAGE_SEND_ERROR(90000, "短信下发失败"),
     VERIFY_PARAM_ERROR(90001, "短信校验码错误"),
     VERIFY_PARAM_PASS(90002, "短信校验码过期"),
@@ -48,5 +50,9 @@ public enum ApiResultEnum {
     ApiResultEnum(Integer code, String message) {
         this.code = code;
         this.message = message;
+    }
+
+    ApiResultEnum() {
+
     }
 }

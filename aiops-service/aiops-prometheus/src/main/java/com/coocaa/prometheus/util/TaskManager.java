@@ -1,5 +1,11 @@
 package com.coocaa.prometheus.util;
 
+import com.coocaa.common.constant.Constant;
+import com.coocaa.common.constant.TableConstant;
+import com.coocaa.core.tool.singleton.SingleTonContextEnum;
+import com.coocaa.prometheus.entity.Task;
+import com.coocaa.prometheus.util.runnable.QueryMetricTask;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,29 +27,47 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Component("TaskManager")
 @Slf4j
 public class TaskManager implements DisposableBean {
+    @Getter
     private final Map<Long, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>(16);
     private final Map<Long, AtomicInteger> taskErrorTimes = new ConcurrentHashMap<>(16);
     @Autowired
     private TaskScheduler taskScheduler;
-    private volatile Integer notifyNumber = 5;
 
-    public void addCronTask(Long taskId, Runnable task, String cronExpression) {
-        if (this.scheduledTasks.containsKey(taskId)) {
-            removeCronTask(taskId);
+    public void addCronTask(Task task) {
+        judgeTaskStopFlag(task, false);
+        try {
+            Long taskId = task.getId();
+            String cronExpression = task.getTaskCron();
+            if (this.scheduledTasks.containsKey(taskId)) {
+                removeCronTask(taskId);
+            }
+            ScheduledFuture<?> future = taskScheduler.schedule(new QueryMetricTask(task), new CronTrigger(cronExpression));
+            this.scheduledTasks.put(taskId, future);
+            this.taskErrorTimes.put(taskId, task.getErrorNumber() == null ? new AtomicInteger(0) : new AtomicInteger(task.getErrorNumber()));
+            task.setIsUp(Constant.NumberType.GOOD_PROPERTY);
+            task.setInstance(SingleTonContextEnum.INSTANCE.getIpUtil().getCurrentInstance());
+            SingletonEnum.INSTANCE.getTaskService().updateById(task);
+            log.info("定时任务Id:" + taskId + " 启动,当前线程数:" + Thread.activeCount());
+        } catch (Exception e) {
+            log.error(e.toString());
         }
-        ScheduledFuture<?> future = taskScheduler.schedule(task, new CronTrigger(cronExpression));
-        this.scheduledTasks.put(taskId, future);
     }
 
     @Transactional
     public synchronized boolean removeCronTask(Long taskId) {
         if (this.scheduledTasks.containsKey(taskId)) {
             ScheduledFuture<?> scheduledTask = this.scheduledTasks.remove(taskId);
+            this.taskErrorTimes.remove(taskId);
             if (scheduledTask != null && !scheduledTask.isCancelled()) {
                 scheduledTask.cancel(true);
-                log.info("定时任务停止-" + taskId);
+                SingletonEnum.INSTANCE.getTaskService().updateById(Task.builder().id(taskId).isUp(Constant.NumberType.BAD_PROPERTY).instance("").build());
+                log.info("定时任务id:" + taskId + " 停止,当前线程数:" + Thread.activeCount());
                 return true;
             }
+        } else {
+            SingletonEnum.INSTANCE.getTaskService().updateById(Task.builder().id(taskId).isUp(Constant.NumberType.BAD_PROPERTY).instance("").build());
+            log.info("定时任务id:" + taskId + " 停止,当前线程数:" + Thread.activeCount());
+            return true;
         }
         return false;
     }
@@ -58,10 +82,25 @@ public class TaskManager implements DisposableBean {
 
     public synchronized Boolean isOverErrorTimes(Long taskId) {
         taskErrorTimes.putIfAbsent(taskId, new AtomicInteger(0));
-        return taskErrorTimes.get(taskId).getAndIncrement() > notifyNumber;
+        return taskErrorTimes.get(taskId).getAndIncrement() >= TableConstant.TASK.START_ERROR_FLAG_NUMBER;
     }
 
     public synchronized void deleteErrorTimesMap(Long taskId) {
         taskErrorTimes.remove(taskId);
     }
+
+    public boolean judgeTaskStopFlag(Task task, boolean isUpFlag) {
+        boolean isStopFlag = false;
+        if (task == null)
+            return true;
+        if (isUpFlag && !Constant.NumberType.GOOD_PROPERTY.equals(task.getIsUp())) {
+            isStopFlag = true;
+        } else if (!Constant.NumberType.ZERO_PROPERTY.equals(task.getLogic())) {
+            isStopFlag = true;
+        } else if (!Constant.NumberType.GOOD_PROPERTY.equals(task.getStatus())) {
+            isStopFlag = true;
+        }
+        return isStopFlag;
+    }
+
 }

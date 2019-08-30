@@ -153,18 +153,18 @@ public class AiopsRestExceptionTranslator {
     public R clientExceptionHandler(ClientException clientException) {
         return R.fail(ResultCode.SERVICE_CALL_ERROR, clientException.getMessage());
     }
+
     @ExceptionHandler(value = BaseException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public R exceptionHandler(BaseException e){
+    public R exceptionHandler(BaseException e) {
         log.error("catch BaseException for 基础异常: {}", e.getMessage());
         return R.fail(e.getCode(), e.getMsg());
     }
 
-    @ExceptionHandler(value = Exception.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public R exceptionHandler(Exception e){
-        System.out.println(e.getClass());
-        log.error("catch Exception for 未捕获异常: {}", e.getMessage());
-        return R.fail(CodeEnum.UN_KNOW_ERROR.getCode(), e.getMessage());
-    }
+//    @ExceptionHandler(value = Exception.class)
+//    @ResponseStatus(HttpStatus.BAD_REQUEST)
+//    public R exceptionHandler(Exception e) {
+//        log.error("catch Exception for 未捕获异常: {}", e.toString());
+//        return R.fail(CodeEnum.UN_KNOW_ERROR.getCode(), e.toString());
+//    }
 }

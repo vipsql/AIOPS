@@ -7,7 +7,6 @@ import com.coocaa.core.log.exception.ApiException;
 import com.coocaa.core.log.exception.ApiResultEnum;
 import com.coocaa.core.log.response.ResponseHelper;
 import com.coocaa.core.log.response.ResultBean;
-import com.coocaa.core.secure.utils.SecureUtil;
 import com.coocaa.core.tool.api.R;
 import com.coocaa.core.tool.base.BaseException;
 import com.coocaa.core.tool.response.CodeEnum;
@@ -67,7 +66,8 @@ public class PromQLServiceImpl implements PromQLService {
     private KpiMapper kpiMapper;
     @Value("${web.server.prometheus.apiUrl}")
     private String serverUrl;
-
+    private final int TEAM_ID_TO_NAME = 0;
+    private final int USER_ID_TO_NAME = 1;
     private SimpleDateFormat metisDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     @Override
@@ -82,13 +82,13 @@ public class PromQLServiceImpl implements PromQLService {
         List<TaskOutputVo> resultList = list.stream().map(task -> {
             TaskOutputVo vo = BeanUtil.copy(task, TaskOutputVo.class);
             QueryRange queryRange = JSON.parseObject(task.getArgs(), QueryRange.class);
+            vo.setQueryRangeString(queryRange.getQuery());
             queryRange.setQuery(queryRange.getQuery().replaceAll("%s", ""));
             vo.setQueryRange(queryRange);
-            CompletableFuture<Map<Long, Object>> idToNameUserMapAsync = getIdToNameMapAsync(task.getCreateUserId());
-            CompletableFuture<Map<Long, String>> idToNameTeamMapAsync = getIdToNameMapAsync(task.getTeamIds());
-//            CompletableFuture<Map<String, Set<String>>> conditionByMetricsNameAsync = getConditionByMetricsNameAsync(queryRange.getQuery().replaceAll("%s", ""), 1);
+            CompletableFuture<Map<Long, String>> idToNameUserMapAsync = getIdToNameMapAsync(Func.toStr(task.getCreateUserId()), USER_ID_TO_NAME);
+            CompletableFuture<Map<Long, String>> idToNameTeamMapAsync = getIdToNameMapAsync(task.getTeamIds(), TEAM_ID_TO_NAME);
             // 拼装指标集
-            Map<Long, Object> map = SqlUtil.map(task.getMetricsId(), kpiMapper.selectById(task.getMetricsId()).getName()).build();
+            Map<Long, String> map = SqlUtil.map(task.getMetricsId(), kpiMapper.selectById(task.getMetricsId()).getName()).build();
             vo.setMetricsIdToNameMap(map);
             CompletableFuture.allOf(idToNameUserMapAsync, idToNameTeamMapAsync).join();
             try {
@@ -96,14 +96,9 @@ public class PromQLServiceImpl implements PromQLService {
                 vo.setCreateUserIdToNameMap(idToNameUserMapAsync.get());
                 // Team
                 vo.setTeamIdToNameMap(idToNameTeamMapAsync.get());
-                // 拼装条件
-//                Map<String, Set<String>> conditionByMetricsName = conditionByMetricsNameAsync.get();
-//                if (CollectionUtil.isNotEmpty(conditionByMetricsName)) {
-//                    vo.setConditionResult(conditionByMetricsName);
-//                }
                 return vo;
             } catch (Exception e) {
-                System.out.println(vo);
+                System.out.println(e);
             }
             return vo;
         }).collect(Collectors.toList());
@@ -112,32 +107,21 @@ public class PromQLServiceImpl implements PromQLService {
     }
 
     @Async
-    CompletableFuture<Map<String, Set<String>>> getConditionByMetricsNameAsync(String metricsName, Integer minute) {
-        try {
-            return CompletableFuture.completedFuture(getConditionByMetricsName(metricsName, minute));
-        } catch (Exception e) {
-        }
-        return CompletableFuture.completedFuture(Collections.emptyMap());
-    }
-
-    @Async
-    CompletableFuture<Map<Long, String>> getIdToNameMapAsync(String teamIds) {
-        try {
-            // 拼装Team
-            if (!StringUtil.isEmpty(teamIds))
-                return CompletableFuture.completedFuture(userClient.getIdToNameMap(teamIds).getData());
-        } catch (Exception e) {
-
-        }
-        return CompletableFuture.completedFuture(Collections.emptyMap());
-    }
-
-    @Async
-    CompletableFuture<Map<Long, Object>> getIdToNameMapAsync(Long userId) {
-        if (userId != null && userId != 0) {
-            R<User> rpcResult = userClient.userById(userId);
-            if (rpcResult.isSuccess())
-                return CompletableFuture.completedFuture(SqlUtil.map(userId, rpcResult.getData().getName()).build());
+    CompletableFuture<Map<Long, String>> getIdToNameMapAsync(String ids, Integer type) {
+        if (StringUtil.isEmpty(ids))
+            return CompletableFuture.completedFuture(Collections.emptyMap());
+        switch (type) {
+            case USER_ID_TO_NAME:
+                long userId = Long.parseLong(ids);
+                R<User> rpcResult = userClient.userById(userId);
+                if (rpcResult.isSuccess())
+                    return CompletableFuture.completedFuture(SqlUtil.map(userId, rpcResult.getData().getName()).build());
+                break;
+            case TEAM_ID_TO_NAME:
+                // 拼装Team
+                return CompletableFuture.completedFuture(userClient.getIdToNameMap(ids).getData());
+            default:
+                break;
         }
         return CompletableFuture.completedFuture(Collections.emptyMap());
     }

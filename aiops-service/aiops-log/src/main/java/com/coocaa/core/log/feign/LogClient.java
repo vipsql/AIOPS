@@ -6,6 +6,7 @@ import com.coocaa.core.tool.api.R;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+
 /**
  * 日志服务Feign实现类
  *
@@ -18,7 +19,6 @@ public class LogClient implements ILogClient {
     ILogUsualService usualLogService;
 
     ILogApiService apiLogService;
-
     ILogErrorService errorLogService;
 
     @Override
@@ -32,6 +32,7 @@ public class LogClient implements ILogClient {
     @PostMapping(API_PREFIX + "/saveApiLog")
     public R<Boolean> saveApiLog(@RequestBody LogApi log) {
         log.setParams(log.getParams().replace("&amp;", "&"));
+        apiLogService.deleteLogs();
         return R.data(apiLogService.save(log));
     }
 

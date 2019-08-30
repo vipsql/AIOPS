@@ -1,13 +1,14 @@
 package com.coocaa.detector.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.coocaa.core.tool.utils.CollectionUtil;
 import lombok.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * 训练类
+ *
  * @author 陈煜坤
  * @date 2019/8/7  15:15
  * @package_name com.common.parent_model.entity
@@ -58,7 +59,7 @@ public class Train {
     private String stutas = "mark";
 
     /**
-     *  时间间隔
+     * 时间间隔
      */
     private int timeInterval;
 
@@ -68,12 +69,12 @@ public class Train {
     private int exTime;
 
     public Train() {
-        if (trainOrTest==null){
+        if (trainOrTest == null) {
             trainOrTest = new ArrayList<>();
             trainOrTest.add("train");
             trainOrTest.add("test");
         }
-        if (source==null){
+        if (source == null) {
             source = new ArrayList<>();
         }
     }
@@ -81,7 +82,7 @@ public class Train {
 
     public void setTrainOrTest(String str) {
         String[] split = str.split(",");
-        if (split.length > 0){
+        if (split.length > 0) {
             for (String s : split) {
                 trainOrTest.add(s);
             }
@@ -94,11 +95,11 @@ public class Train {
     }
 
     public void setSource(String str) {
+        if (CollectionUtil.isEmpty(source))
+            source = new ArrayList<>();
         String[] split = str.split(",");
-        if (split.length > 0){
-            for (String s : split) {
-                source.add(s);
-            }
+        if (split.length > 0) {
+            source.addAll(Arrays.asList(split));
         }
     }
 

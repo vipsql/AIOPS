@@ -17,6 +17,8 @@ public interface TeamService extends BaseService<Team> {
 
     ResponseEntity<ResultBean> listByPage(PageRequestBean pageRequestBean);
 
+    ResponseEntity<ResultBean> listByPageWithUserCondition(PageRequestBean pageRequestBean);
+
     TeamOutputVo createTeam(TeamInputVo teamInputVo);
 
     Set<User> getTeamUsers(List<String> teamIds, String connection);

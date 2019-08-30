@@ -49,14 +49,11 @@ public class MetisServiceImpl implements MetisService {
     public String train(Train train) {
         String toJSONString = JSON.toJSONString(train);
         String postForObject = restTemplate.postForObject(HTTPPATH + "/CountSample", train, String.class);
-        Count count = null;
-        try {
-            JSONArray jsonArray = JSON.parseObject(postForObject).getJSONObject("data").getJSONArray("count");
-            List<Count> counts = JSON.parseArray(jsonArray.toJSONString(), Count.class);
-            count = counts.get(0);
+        Count count;
+        JSONArray jsonArray = JSON.parseObject(postForObject).getJSONObject("data").getJSONArray("count");
+        List<Count> counts = JSON.parseArray(jsonArray.toJSONString(), Count.class);
+        count = counts.get(0);
 //            count = MyJSON.jsonToObject(postForObject, Count.class);
-        } catch (Exception e) {
-        }
         if (count.getTotal_count() == 0) {
             return "数据错误";
         }
@@ -68,7 +65,7 @@ public class MetisServiceImpl implements MetisService {
         }
         rabbitTemplate.convertAndSend("metis", "metis.train", toJSONString);
         String s = showTimeForecast(count.getTotal_count());
-        train.setExTime(Integer.valueOf(s));
+        train.setExTime(Integer.parseInt(s));
         trainMapper.insert(train);
         return s;
     }
@@ -178,12 +175,11 @@ public class MetisServiceImpl implements MetisService {
                 }
             }
             if ((sum - m.getSampleNum()) <= 0) {
-                double i = Double.valueOf(sum + "") / m.getSampleNum();
-                System.out.println(i);
+                double i = Double.parseDouble(sum + "") / m.getSampleNum();
                 String str = String.valueOf((m.getEndTime().getTime() - m.getStartTime().getTime()) * i);
                 return str.substring(0, str.indexOf("."));
             } else {
-                double i = Double.valueOf(sum + "") / m.getSampleNum();
+                double i = Double.parseDouble(sum + "") / m.getSampleNum();
                 String str = String.valueOf((m.getEndTime().getTime() - m.getStartTime().getTime()) * i);
                 return str.substring(0, str.indexOf("."));
             }
@@ -193,23 +189,23 @@ public class MetisServiceImpl implements MetisService {
 
     @Override
     public List<Train> getTrain(int current, int size, Train train) {
-        IPage<Train> iPage = new Page<>(current,size);
+        IPage<Train> iPage = new Page<>(current, size);
         QueryWrapper<Train> trainQueryWrapper = new QueryWrapper<>();
 
-        if(train.getSource().size() > 0){
-            trainQueryWrapper.like("source",train.getSource().get(0));
+        if (train.getSource().size() > 0) {
+            trainQueryWrapper.like("source", train.getSource().get(0));
         }
-        if(StringUtils.isNotBlank(train.getModelName())){
-            trainQueryWrapper.like("model_name",train.getModelName());
+        if (StringUtils.isNotBlank(train.getModelName())) {
+            trainQueryWrapper.like("model_name", train.getModelName());
         }
-        if(train.getBeginTime()>0){
-            trainQueryWrapper.ge(true,"begin_time",train.getBeginTime());
+        if (train.getBeginTime() > 0) {
+            trainQueryWrapper.ge(true, "begin_time", train.getBeginTime());
         }
-        if(train.getEndTime()>0){
-            trainQueryWrapper.le(true,"end_time",train.getEndTime());
+        if (train.getEndTime() > 0) {
+            trainQueryWrapper.le(true, "end_time", train.getEndTime());
         }
-        if(train.getTimeInterval()>0){
-            trainQueryWrapper.eq("time_interval",train.getTimeInterval());
+        if (train.getTimeInterval() > 0) {
+            trainQueryWrapper.eq("time_interval", train.getTimeInterval());
         }
         IPage<Train> iPage1 = trainMapper.selectPage(iPage, trainQueryWrapper);
         List<Train> records = iPage1.getRecords();

@@ -8,11 +8,9 @@ import com.coocaa.notice.entity.Mail;
 import com.coocaa.notice.entity.MsgLog;
 import com.coocaa.notice.mapper.MsgLogMapper;
 import com.coocaa.notice.service.IMailService;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.stereotype.Service;
 
@@ -31,7 +29,6 @@ public class MailServiceImpl extends ServiceImpl<MsgLogMapper, MsgLog> implement
 
     @Autowired
     JavaMailSenderImpl mailSender;
-
 
     @Override
     public boolean addMailNoticeToMQ(Mail mail) {

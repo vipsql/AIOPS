@@ -1,16 +1,16 @@
 package com.coocaa.prometheus.service.impl;
 
 import com.alibaba.fastjson.JSON;
-import com.coocaa.common.constant.Constant;
-import com.coocaa.common.constant.TableConstant;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.coocaa.common.constant.*;
 import com.coocaa.common.request.RequestBean;
 import com.coocaa.core.log.exception.ApiException;
 import com.coocaa.core.log.exception.ApiResultEnum;
 import com.coocaa.core.mybatis.base.BaseServiceImpl;
 import com.coocaa.core.secure.utils.SecureUtil;
 import com.coocaa.core.tool.api.R;
-import com.coocaa.core.tool.utils.DateUtil;
-import com.coocaa.core.tool.utils.SqlUtil;
+import com.coocaa.core.tool.singleton.SingleTonContextEnum;
+import com.coocaa.core.tool.utils.*;
 import com.coocaa.detector.entity.Train;
 import com.coocaa.detector.feign.IDetectorClient;
 import com.coocaa.prometheus.dto.MetisDto;
@@ -23,9 +23,7 @@ import com.coocaa.prometheus.output.MetisCsvOutputVo;
 import com.coocaa.prometheus.output.MetricsCsvVo;
 import com.coocaa.prometheus.service.PromQLService;
 import com.coocaa.prometheus.service.TaskService;
-import com.coocaa.prometheus.util.PromQLUtil;
-import com.coocaa.prometheus.util.TaskManager;
-import com.coocaa.prometheus.util.runnable.QueryMetricTask;
+import com.coocaa.prometheus.util.*;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -54,25 +52,35 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
     public Task createQueryMetricsTask(TaskInputVo taskInputVo, Integer type) {
         Task task = new Task();
         BeanUtils.copyProperties(taskInputVo, task);
+        boolean insert = false;
+        // 插入操作
+        if (taskInputVo.getId() == null || taskInputVo.getId() == 0) {
+            Integer size = taskMapper.selectCount(new QueryWrapper<Task>().eq(TableConstant.TASK.TASK_NAME, taskInputVo.getTaskName()));
+            if (size > 0)
+                throw new ApiException(ApiResultEnum.NAME_REPEAT_ERROR);
+            task.setCreateUserId(SecureUtil.getUserId());
+            insert = true;
+        }
         QueryRange queryRange = task.getQueryRange();
         if (queryRange != null)
             task.setArgs(JSON.toJSONString(queryRange));
         task.setStatus(Constant.NumberType.GOOD_PROPERTY);
-        task.setCreateUserId(SecureUtil.getUserId());
-        boolean insert = task.insertOrUpdate();
+        task.insertOrUpdate();
+        // 插入操作才启动定时任务,更新操作不重启定时任务,等定时任务再次执行时延迟更新
         if (insert && Constant.NumberType.ONE_PROPERTY.equals(type)) {
-            QueryMetricTask queryMetricTask = new QueryMetricTask(task);
-            taskManager.addCronTask(task.getId(), queryMetricTask, task.getTaskCron());
+            taskManager.addCronTask(task);
         }
         return task;
     }
 
     @Override
     @Transactional
-    public Boolean removeQueryMetricsTask(RequestBean requestbean, Integer type) {
+    public Boolean changeQueryMetricsTask(RequestBean requestbean, Integer type) {
+        // 0删除1启用2禁用3停止
         Set<Long> taskIdSets = new HashSet<>();
         requestbean.getItems().forEach(item -> {
             List<Task> tasks = taskMapper.selectByMap(SqlUtil.map(item.getQuery(), item.getQueryString()).build());
+            // 2禁用
             if (Constant.NumberType.TWO_PROPERTY.equals(type)) {
                 // 禁用指定的定时任务
                 tasks.forEach(task -> {
@@ -80,27 +88,32 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
                     task.insertOrUpdate();
                 });
             }
+            // 1启用
+            else if (Constant.NumberType.ONE_PROPERTY.equals(type)) {
+                tasks.forEach(task -> taskManager.addCronTask(task));
+            }
             // 获取指定的sets
             List<Long> ids = tasks.stream().map(Task::getId).collect(Collectors.toList());
             taskIdSets.addAll(ids);
         });
         boolean deleteFlag = Constant.NumberType.ZERO_PROPERTY.equals(type);
-        taskIdSets.forEach(item -> {
-            taskManager.removeCronTask(item);
-            if (deleteFlag) {
-                taskMapper.deleteByMap(SqlUtil.map(TableConstant.ID, item.toString()).build());
-            }
-        });
+        // 3停止
+        if (!Constant.NumberType.ONE_PROPERTY.equals(type)) {
+            taskIdSets.forEach(item -> {
+                taskManager.removeCronTask(item);
+                // 0删除
+                if (deleteFlag) {
+                    taskMapper.deleteByMap(SqlUtil.map(TableConstant.ID, item.toString()).build());
+                }
+            });
+        }
         return true;
     }
 
     @Override
     public void bootstrapAllTask() {
-        List<Task> tasks = taskMapper.findAll();
-        tasks.forEach(task -> {
-            QueryMetricTask queryMetricTask = new QueryMetricTask(task);
-            taskManager.addCronTask(task.getId(), queryMetricTask, task.getTaskCron());
-        });
+        List<Task> tasks = taskMapper.getCanRunTask(TableConstant.TASK.START_PAGE, TableConstant.TASK.START_COUNT, SingleTonContextEnum.INSTANCE.getIpUtil().getLocalIP());
+        tasks.forEach(task -> taskManager.addCronTask(task));
     }
 
     @Override
@@ -156,10 +169,13 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         if (importRpcResult.isSuccess()) {
             Train train = Train.builder()
                     .positiveOrNegative("")
+                    .timeInterval(metisCsvInputVo.getSpan())
                     .beginTime(metisCsvInputVo.getBegin().getTime() / 1000).endTime(metisCsvInputVo.getEnd().getTime() / 1000)
-                    .source(Arrays.asList(metisCsvInputVo.getSource())).trainOrTest(Arrays.asList(metisCsvInputVo.getTrainOrTest()))
+                    .trainOrTest(Arrays.asList(metisCsvInputVo.getTrainOrTest()))
                     .modelName(modelName)
+                    .stutas("mark")
                     .build();
+            train.setData(metisCsvInputVo.getSource());
             R<Boolean> trainRpcResult = detectorClient.train(train);
         }
     }
@@ -169,11 +185,22 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
     public void restartTask(RequestBean requestBean) {
         requestBean.getItems().forEach(item -> {
             List<Task> tasks = taskMapper.selectByMap(SqlUtil.map(item.getQuery(), item.getQueryString()).build());
-            tasks.forEach(task -> {
-                QueryMetricTask queryMetricTask = new QueryMetricTask(task);
-                taskManager.addCronTask(task.getId(), queryMetricTask, task.getTaskCron());
-            });
+            tasks.forEach(task -> taskManager.addCronTask(task));
         });
+    }
+
+    @Override
+    public Map<String, MatrixData> detectByMetis(Task task, Date date) throws ExecutionException, InterruptedException {
+        QueryRange queryRange = JSON.parseObject(task.getArgs(), QueryRange.class);
+        Kpi kpi = kpiMapper.selectById(task.getMetricsId());
+        MetisDto metisDto = MetisDto.builder()
+                .viewId(kpi.getId())
+                .viewName(kpi.getName())
+                .attrId(task.getId())
+                .attrName(task.getTaskName())
+                .modelName(task.getModelName()).build();
+        Map<String, MatrixData> rangeValues = promQLService.getRangeValues(metisDto, date, queryRange.getQuery(), queryRange.getSpan(), queryRange.getStep(), queryRange.getConditions());
+        return rangeValues;
     }
 
     /**

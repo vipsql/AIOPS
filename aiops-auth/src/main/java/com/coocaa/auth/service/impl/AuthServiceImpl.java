@@ -72,20 +72,7 @@ public class AuthServiceImpl implements AuthService {
         String token = "";
         User user;
         if (!R.isSuccess(apiResult)) {
-            LDAPEntry userInfo = ldapUtil.validAndGetUser(account, password);
-            String[] userInfos = userInfo.getDN().split(",");
-            String name = userInfo.getAttributeSet().getAttribute("name").getStringValue();
-            user = User.builder()
-                    .name(name)
-                    .account(name)
-                    .mail(userInfo.getAttributeSet().getAttribute("mail").getStringValue())
-                    .mobile(userInfo.getAttributeSet().getAttribute("mobile") == null ? "" : userInfo.getAttributeSet().getAttribute("mobile").getStringValue())
-                    .company(userInfos[4].split("=")[1])
-                    .department(userInfos[3].split("=")[1])
-                    .departmentGroup(userInfos[2].split("=")[1])
-                    .organization(userInfos[1].split("=")[1])
-                    .password(password)
-                    .build();
+            user = getUserFromLdap(account, password);
             R<Integer> insert = userClient.insert(user);
             if (R.isSuccess(insert)) {
                 token = getAuthInfoFromUser(user);
@@ -100,6 +87,24 @@ public class AuthServiceImpl implements AuthService {
             return getHeaderResult(token, user);
         }
         throw new ApiException(ApiResultEnum.FUNCTION_NOT_EXEC_ERROR);
+    }
+
+    private User getUserFromLdap(String account, String password) {
+        LDAPEntry userInfo = ldapUtil.validAndGetUser(account, password);
+        String[] userInfos = userInfo.getDN().split(",");
+        String name = userInfo.getAttributeSet().getAttribute("name").getStringValue();
+        User user = User.builder()
+                .name(name)
+                .account(name)
+                .mail(userInfo.getAttributeSet().getAttribute("mail").getStringValue())
+                .mobile(userInfo.getAttributeSet().getAttribute("mobile") == null ? "" : userInfo.getAttributeSet().getAttribute("mobile").getStringValue())
+                .company(userInfos[4].split("=")[1])
+                .department(userInfos[3].split("=")[1])
+                .departmentGroup(userInfos[2].split("=")[1])
+                .organization(userInfos[1].split("=")[1])
+                .password(password)
+                .build();
+        return user;
     }
 
     @Override

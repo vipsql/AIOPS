@@ -1,8 +1,11 @@
 package com.coocaa.common.request;
 
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.coocaa.common.constant.StringConstant;
 import com.coocaa.common.constant.TableConstant;
+
+import java.util.Optional;
 
 /**
  * @program: intelligent_maintenance
@@ -21,32 +24,11 @@ public class RequestUtil {
     }
 
     public static void setDefaultPageBean(PageRequestBean pageRequestBean) {
-        if (pageRequestBean.getPage() == null) {
-            pageRequestBean.setPage(0);
-        }
-        if (pageRequestBean.getCount() == null || pageRequestBean.getCount() == 0) {
-            pageRequestBean.setCount(5);
-        }
-        if (pageRequestBean.getOrderBy() == null) {
-            pageRequestBean.setOrderBy(TableConstant.ID);
-        }
-        if (pageRequestBean.getSortType() == null) {
-            pageRequestBean.setSortType(StringConstant.DESC);
-        }
-    }
-
-    public static void setDefaultPageBean(PageWithTeamRequestBean pageRequestBean) {
-        if (pageRequestBean.getPage() == null) {
-            pageRequestBean.setPage(0);
-        }
-        if (pageRequestBean.getCount() == null || pageRequestBean.getCount() == 0) {
-            pageRequestBean.setCount(5);
-        }
-        if (pageRequestBean.getOrderBy() == null) {
-            pageRequestBean.setOrderBy(TableConstant.ID);
-        }
-        if (pageRequestBean.getSortType() == null) {
-            pageRequestBean.setSortType(StringConstant.DESC);
-        }
+        pageRequestBean.setPage(Optional.ofNullable(pageRequestBean.getPage()).orElse(0));
+        pageRequestBean.setCount(Optional.ofNullable(pageRequestBean.getCount()).orElse(5));
+        pageRequestBean.setOrderBy(Optional.ofNullable(pageRequestBean.getOrderBy()).orElse(TableConstant.ID));
+        pageRequestBean.setSortType(Optional.ofNullable(pageRequestBean.getSortType()).orElse(StringConstant.DESC));
+        if (!CollectionUtils.isEmpty(pageRequestBean.getConditions()) && StringUtils.isEmpty(pageRequestBean.getConditionConnection()))
+            pageRequestBean.setConditionConnection(StringConstant.AND);
     }
 }

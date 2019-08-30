@@ -1,11 +1,15 @@
 package com.coocaa.user.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.activerecord.Model;
+import com.coocaa.common.constant.StringConstant;
 import com.coocaa.common.constant.TableConstant;
 import com.coocaa.common.request.RequestBean;
+import com.coocaa.core.log.response.ResponseHelper;
+import com.coocaa.core.log.response.ResultBean;
 import com.coocaa.core.secure.utils.SecureUtil;
 import com.coocaa.core.tool.utils.*;
-import com.coocaa.user.entity.User;
+import com.coocaa.user.entity.*;
 import com.coocaa.user.input.UserInputVo;
 import com.coocaa.user.mapper.TeamMapper;
 import com.coocaa.user.mapper.UserMapper;
@@ -13,10 +17,14 @@ import com.coocaa.user.service.UserService;
 import com.coocaa.core.log.exception.ApiException;
 import com.coocaa.core.log.exception.ApiResultEnum;
 import com.coocaa.core.mybatis.base.BaseServiceImpl;
-import com.coocaa.user.entity.UserInfo;
+import io.swagger.annotations.ApiOperation;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
@@ -59,11 +67,14 @@ public class UserServiceImpl extends BaseServiceImpl<UserMapper, User> implement
         // 修改权限判断
         if (userId != null && userId != 0 && !currentUserId.equals(userId)) {
             User databaseUser = userMapper.selectById(userId);
-            // 修改的用户所在Team的所有管理员Id
-            List<String> adminUserIds = teamMapper.selectAdminUserIdsInTeamIds(TableConstant.ID, StringUtil.addBrackets(databaseUser.getTeamIds()));
-            // 判断当前用户Id是否在user的Team管理员Id里
-            if (CollectionUtil.isEmpty(adminUserIds) || !adminUserIds.contains(currentUserId + "")) {
-                throw new ApiException(ApiResultEnum.USER_NOT_USER_TEAM_ADMIN);
+            // 用户的属于某个Team 需要判断权限
+            if (!StringUtils.isEmpty(databaseUser.getTeamIds())) {
+                // 修改的用户所在Team的所有管理员Id
+                List<String> adminUserIds = teamMapper.selectAdminUserIdsInTeamIds(TableConstant.ID, StringUtil.addBrackets(databaseUser.getTeamIds()));
+                // 判断当前用户Id是否在user的Team管理员Id里
+                if (CollectionUtil.isEmpty(adminUserIds) || !adminUserIds.contains(currentUserId + "")) {
+                    throw new ApiException(ApiResultEnum.USER_NOT_USER_TEAM_ADMIN);
+                }
             }
         }
         user.insertOrUpdate();
@@ -79,4 +90,19 @@ public class UserServiceImpl extends BaseServiceImpl<UserMapper, User> implement
         return user;
     }
 
+    @Override
+    public void deletes(RequestBean requestBean) {
+        requestBean.getItems().forEach(item -> {
+            // 用户删除
+            List<User> users = userMapper.selectByMap(SqlUtil.map(item.getQuery(), item.getQueryString()).build());
+            users.forEach(user -> {
+                // Team admin置空
+                Team team = new Team();
+                team.setAdminUserId(0L);
+                teamMapper.update(team, new QueryWrapper<Team>().eq(TableConstant.USER.ADMIN_USER_ID, user.getId()));
+                userMapper.deleteById(user.getId());
+            });
+        });
+
+    }
 }

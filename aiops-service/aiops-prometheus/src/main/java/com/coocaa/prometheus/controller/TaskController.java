@@ -91,12 +91,12 @@ public class TaskController {
     }
 
     @DeleteMapping("/stop/{type}")
-    @ApiOperation(value = "删除、停止或禁用监控定时任务",
+    @ApiOperation(value = "删除、停止、禁用或启用监控定时任务",
             notes = "query: 对应数据库表键值如id  \n" +
                     "queryString: 对应查询值如17  \n" +
-                    "type: 0删除1停止2禁用  \n")
-    public ResponseEntity<ResultBean> stopTask(@RequestBody RequestBean requestBean, @PathVariable Integer type) {
-        Boolean queryMetricsTask = taskService.removeQueryMetricsTask(requestBean, type);
+                    "type: 0删除1启用2禁用3停止  \n")
+    public ResponseEntity<ResultBean> changeTask(@RequestBody RequestBean requestBean, @PathVariable Integer type) {
+        Boolean queryMetricsTask = taskService.changeQueryMetricsTask(requestBean, type);
         return ResponseHelper.OK(queryMetricsTask);
     }
 

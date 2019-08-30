@@ -19,8 +19,12 @@ public class SqlUtil {
         return ImmutableMap.<String, Object>builder().put(query, queryString);
     }
 
-    public static ImmutableMap.Builder<Long, Object> map(Long query, String queryString) {
-        return ImmutableMap.<Long, Object>builder().put(query, queryString);
+    public static ImmutableMap.Builder<String, String> mapWithString(String query, String queryString) {
+        return ImmutableMap.<String, String>builder().put(query, queryString);
+    }
+
+    public static ImmutableMap.Builder<Long, String> map(Long query, String queryString) {
+        return ImmutableMap.<Long, String>builder().put(query, queryString);
     }
 
     public static ImmutableMap.Builder<String, Object> map(String query, Object queryString) {
@@ -29,33 +33,48 @@ public class SqlUtil {
 
     public static Map<String, Object> map(RequestBean requestBean) {
         HashMap<String, Object> resultMap = new HashMap<>();
-        requestBean.getItems().forEach(item -> {
-            resultMap.put(item.getQuery(), item.getQueryString());
-        });
+        requestBean.getItems().forEach(item ->
+                resultMap.put(item.getQuery(), item.getQueryString())
+        );
         return resultMap;
     }
 
     public static String getConditionString(List<PageRequestBean.PageRequestItem> conditions, String conditionConnection) {
         if (CollectionUtil.isNotEmpty(conditions)) {
+            String[] connections = conditionConnection.split(" ");
             StringBuffer sql = new StringBuffer();
-            conditions.forEach(condition -> {
-                if (StringConstant.LIKE.equalsIgnoreCase(condition.getConnection())) {
-                    condition.setQueryString(StringUtil.addPercentageSign(condition.getQueryString()));
-                } else if (StringConstant.GREATER_STR.equalsIgnoreCase(condition.getConnection())) {
-                    condition.setConnection(StringConstant.GREATER);
-                } else if (StringConstant.LESS_STR.equalsIgnoreCase(condition.getConnection())) {
-                    condition.setConnection(StringConstant.LESS);
-                }
-                sql.append(condition.getQuery())
-                        .append(" ").append(condition.getConnection()).append(" ")
-                        .append("\'").append(condition.getQueryString()).append("\'")
-                        .append(" ").append(conditionConnection).append(" ");
-            });
-            if (StringConstant.AND.equalsIgnoreCase(conditionConnection))
-                return sql.toString().substring(0, sql.length() - 4);
-            return sql.toString().substring(0, sql.length() - 3);
+            int i;
+            for (i = 0; i < conditions.size() - 1; i++) {
+                addCondition(sql, conditions.get(i), connections[i]);
+            }
+            addCondition(sql, conditions.get(i), null);
+            return sql.toString();
         }
         return null;
+    }
+
+    public static StringBuffer addCondition(StringBuffer sql, PageRequestBean.PageRequestItem condition, String connection) {
+        if (StringConstant.LIKE.equalsIgnoreCase(condition.getConnection())) {
+            condition.setQueryString(StringUtil.addPercentageSign(condition.getQueryString()));
+        } else if (StringConstant.GREATER_STR.equalsIgnoreCase(condition.getConnection())) {
+            condition.setConnection(StringConstant.GREATER);
+        } else if (StringConstant.LESS_STR.equalsIgnoreCase(condition.getConnection())) {
+            condition.setConnection(StringConstant.LESS);
+        } else if (StringConstant.NOT_EQUAL_STR.equalsIgnoreCase(condition.getConnection())) {
+            condition.setConnection(StringConstant.NOT_EQUAL);
+        }
+        String conditionConnection = condition.getConnection();
+        sql.append(condition.getQuery())
+                .append(" ").append(conditionConnection).append(" ");
+        if (conditionConnection.equalsIgnoreCase(StringConstant.IN)) {
+            sql.append("(").append(condition.getQueryString()).append(")");
+        } else {
+            sql.append("\'").append(condition.getQueryString()).append("\'");
+        }
+        if (!StringUtils.isEmpty(connection)) {
+            sql.append(" ").append(connection).append(" ");
+        }
+        return sql;
     }
 
     /**
@@ -96,6 +115,7 @@ public class SqlUtil {
     public static String addTeamIdsConditions(String conditions, List<PageRequestBean.PageTeamRequestItem> teamConditions) {
         if (CollectionUtils.isEmpty(teamConditions))
             return conditions;
+        preHandle(teamConditions);
         StringBuffer sql = new StringBuffer();
         String teamConditionString;
         teamConditions.stream().forEach(condition ->
@@ -106,5 +126,19 @@ public class SqlUtil {
             teamConditionString = conditions + " AND LENGTH(team_ids)>0 " + sql.toString();
         }
         return teamConditionString;
+    }
+
+    private static List<PageRequestBean.PageTeamRequestItem> preHandle(List<PageRequestBean.PageTeamRequestItem> teamConditions) {
+        // and放前面   or放后面
+        teamConditions.sort(Comparator.comparing(PageRequestBean.PageTeamRequestItem::getConnection));
+        // 第一个or则换成and
+        if (StringConstant.OR.equalsIgnoreCase(teamConditions.get(0).getConnection())) {
+            teamConditions.get(0).setConnection(StringConstant.AND);
+        }
+        return teamConditions;
+    }
+
+    public static String addLimitCondition(String condition, Integer page, Integer count) {
+        return condition + " LIMIT " + page * count + "," + count;
     }
 }

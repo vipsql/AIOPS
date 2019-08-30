@@ -1,0 +1,74 @@
+server:
+  port: 8888
+swagger:
+  enable: true
+# 需要配置的服务名
+aiops:
+  service:
+    aiops-auth: aiops-auth
+    aiops-user: aiops-user
+    aiops-notice: aiops-notice
+    aiops-log: aiops-log
+    aiops-detector: aiops-detector
+    aiops-prometheus: aiops-prometheus
+
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 39.108.106.167:8848
+    gateway:
+      routes:
+        # 认证中心
+        - id: ${aiops.service.aiops-auth}
+          uri: lb://${aiops.service.aiops-auth}
+          predicates:
+            - Path=/${aiops.service.aiops-auth}/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                # 使用SpEL按名称引用bean
+                key-resolver: '#{@remoteAddrKeyResolver}'
+                # 允许用户每秒处理多少个请求
+                redis-rate-limiter.replenishRate: 10
+                # 允许在一秒钟内完成的最大请求数
+                redis-rate-limiter.burstCapacity: 20
+                # - StripPrefix=1
+                ##       PPT模块
+                #      - id: ${blade.service.huielu-main-service}
+                #        uri: lb://${blade.service.huielu-main-service}
+                #        predicates:
+                #        - Path=/${blade.service.huielu-main-service}/**
+                # 用户模块
+        - id: ${aiops.service.aiops-user}
+          uri: lb://${aiops.service.aiops-user}
+          predicates:
+            - Path=/${aiops.service.aiops-user}/**
+          # 通知模块
+        - id: ${aiops.service.aiops-notice}
+          uri: lb://${aiops.service.aiops-notice}
+          predicates:
+            - Path=/${aiops.service.aiops-notice}/**
+          # 日志模块
+        - id: ${aiops.service.aiops-log}
+          uri: lb://${aiops.service.aiops-log}
+          predicates:
+            - Path=/${aiops.service.aiops-log}/**
+          # 异常检测模块
+        - id: ${aiops.service.aiops-detector}
+          uri: lb://${aiops.service.aiops-detector}
+          predicates:
+            - Path=/${aiops.service.aiops-detector}/**
+          # 对接prometheus模块
+        - id: ${aiops.service.aiops-prometheus}
+          uri: lb://${aiops.service.aiops-prometheus}
+          predicates:
+            - Path=/${aiops.service.aiops-prometheus}/**
+      discovery:
+        locator:
+          enabled: true
+    loadbalancer:
+      retry:
+        enabled: true
+
+

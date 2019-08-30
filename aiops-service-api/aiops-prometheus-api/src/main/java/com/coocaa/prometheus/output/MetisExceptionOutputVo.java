@@ -2,11 +2,13 @@ package com.coocaa.prometheus.output;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.coocaa.prometheus.entity.MatrixData;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.*;
 
 import java.util.Date;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author: dongyang_wu
@@ -20,15 +22,13 @@ import java.util.Map;
 public class MetisExceptionOutputVo {
     private Long id;
     @ApiModelProperty("异常所属指标Id")
-    private Map<Long, Object> taskToStringMap;
-    @ApiModelProperty("最近处理人用户")
-    private Map<Long, Object> recentUserIdMap;
+    private Map<Long, String> taskToStringMap;
     @ApiModelProperty("异常数据List JSON字符串")
-    private String matrixDataJson;
+    private Object matrixDataJsonMap;
     @ApiModelProperty("0未处理1已修正2已恢复3已修复")
     private Integer status;
-    @ApiModelProperty("处理人及理由JSON字符串")
-    private String userToReasonJson;
+    private ConcurrentHashMap<String, Map<String, String>> userToReasonJsonMap;
+    private Object recentUserReason;
     @ApiModelProperty("更新时间")
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
